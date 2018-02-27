@@ -22,13 +22,13 @@ Change line 47 from
 
 ```
 <context:component-scan base-package="org.n52.wps">
-´´´
+```
 
 to 
 
 ```
 <context:component-scan base-package="org.n52.wps">
-´´´
+```
 
 Now the repository should be automatically added to the WPS configuration. To add the example process, you can use the admin interface.
 Log in and navigate to the *Repositories* tab. The *ExampleAlgorithmRepository* should be listed there. Extend the repository and you should see a button *Add algorithm*.
@@ -36,6 +36,6 @@ Click on it and a dialog should appear. Add the following class name:
 
 ```
 org.n52.geoprocessing.example.algorithm.GenericExampleAlgorithm
-´´´
+```
 
 After you restart the WPS the process should be available.
