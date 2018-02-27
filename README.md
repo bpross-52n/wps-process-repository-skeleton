@@ -27,7 +27,7 @@ Change line 47 from
 to 
 
 ```
-<context:component-scan base-package="org.n52.wps">
+<context:component-scan base-package="org.n52">
 ```
 
 Now the repository should be automatically added to the WPS configuration. To add the example process, you can use the admin interface.
