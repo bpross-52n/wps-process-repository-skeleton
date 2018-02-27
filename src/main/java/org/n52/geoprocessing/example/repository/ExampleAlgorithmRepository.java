@@ -49,20 +49,20 @@ public class ExampleAlgorithmRepository implements
             .getLogger(ExampleAlgorithmRepository.class);
     private Map<String, ProcessDescription> processDescriptionMap;
     private Map<String, IAlgorithm> algorithmMap;
-    private ConfigurationModule localAlgorithmRepoConfigModule;
+    private ConfigurationModule exampleAlgorithmRepoConfigModule;
 
     public ExampleAlgorithmRepository() {
         processDescriptionMap = new HashMap<String, ProcessDescription>();
         algorithmMap = new HashMap<String, IAlgorithm>();
 
-        localAlgorithmRepoConfigModule = WPSConfig.getInstance()
+        exampleAlgorithmRepoConfigModule = WPSConfig.getInstance()
                 .getConfigurationModuleForClass(this.getClass().getName(),
                         ConfigurationCategory.REPOSITORY);
 
         // check if the repository is active
-        if (localAlgorithmRepoConfigModule.isActive()) {
+        if (exampleAlgorithmRepoConfigModule.isActive()) {
 
-            List<AlgorithmEntry> algorithmEntries = localAlgorithmRepoConfigModule
+            List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
                     .getAlgorithmEntries();
 
             for (AlgorithmEntry algorithmEntry : algorithmEntries) {
@@ -92,7 +92,7 @@ public class ExampleAlgorithmRepository implements
 
         Collection<String> algorithmNames = new ArrayList<>();
 
-        List<AlgorithmEntry> algorithmEntries = localAlgorithmRepoConfigModule
+        List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
                 .getAlgorithmEntries();
 
         for (AlgorithmEntry algorithmEntry : algorithmEntries) {
