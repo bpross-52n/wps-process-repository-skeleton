@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.n52.wps.io.IOUtils;
+import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
 import org.n52.wps.server.AbstractObservableAlgorithm;
@@ -31,9 +33,11 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
     private String processID;
 
-    private final String inputID = "input";
+    private final String inputID = "input-features";
 
-    private String outputID = "output";
+    private String outputIDAttributionErrors = "attribution-errors";
+
+    private String outputIDConditionReports = "condition-reports";
 
     private final String lineSeparator = System.getProperty("line.separator");
 
@@ -135,9 +139,25 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
         }
 
-        Map<String, IData> outputMap = new HashMap<String, IData>(1);
+        Map<String, IData> outputMap = new HashMap<String, IData>(2);
 
-        outputMap.put(outputID, inputData);
+        try {
+            File attributionErrorsZipfile = IOUtils.zipDirectory(new File("D:/Chaos-Folder/Testbed-14/attribution_errors"));
+
+            outputMap.put(outputIDAttributionErrors, new GenericFileDataBinding(new GenericFileData(attributionErrorsZipfile, "application/zip")));
+
+        } catch (IOException e) {
+            LOGGER.error("Could not create zipfile for attribution errors");
+        }
+
+        try {
+            File conditionReportsZipfile = IOUtils.zipDirectory(new File("D:/Chaos-Folder/Testbed-14/condition_reports"));
+
+            outputMap.put(outputIDConditionReports, new GenericFileDataBinding(new GenericFileData(conditionReportsZipfile, "application/zip")));
+
+        } catch (IOException e) {
+            LOGGER.error("Could not create zipfile for attribution errors");
+        }
 
         LOGGER.info("Finished process with id: " + processID);
         this.update("Finished process with id: " + processID);
@@ -183,7 +203,7 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
     public ProcessDescription getDescription() {
 
         try {
-            InputStream in = getClass().getResourceAsStream("GenericExampleAlgorithm.xml");
+            InputStream in = getClass().getResourceAsStream("GenericGaitToolAlgorithm.xml");//TODO get from class
 
             ProcessDescriptionsDocument processDescriptionsDocument = ProcessDescriptionsDocument.Factory.parse(in);
 

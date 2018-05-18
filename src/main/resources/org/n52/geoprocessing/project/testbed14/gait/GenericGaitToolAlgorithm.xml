@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd" xml:lang="en-US" service="WPS" version="1.0.0">
+  <ProcessDescription statusSupported="true" storeSupported="true" wps:processVersion="1.0.0">
+    <ows:Identifier>org.n52.geoprocessing.project.testbed14.gait.GenericGaitToolAlgorithm</ows:Identifier>
+    <ows:Title>Gait tool process</ows:Title>
+    <ows:Abstract>This process encapsulates the Gait tool</ows:Abstract>
+    <DataInputs>
+      <Input minOccurs="0" maxOccurs="1">
+        <ows:Identifier>input-features</ows:Identifier>
+        <ows:Title>Input features</ows:Title>
+        <ComplexData>
+          <Default>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexData>
+      </Input>
+    </DataInputs>
+    <ProcessOutputs>
+      <Output>
+        <ows:Identifier>attribution-errors</ows:Identifier>
+        <ows:Title>Attribution errors</ows:Title>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/zip</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/zip</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/zip</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+      <Output>
+        <ows:Identifier>condition-reports</ows:Identifier>
+        <ows:Title>Condition reports</ows:Title>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/zip</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/zip</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/zip</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+    </ProcessOutputs>
+  </ProcessDescription>
+</wps:ProcessDescriptions>
