@@ -136,13 +136,13 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
             }
 
         } catch (IOException e) {
-
+            LOGGER.error("Java process was interrupted.");
         }
 
         Map<String, IData> outputMap = new HashMap<String, IData>(2);
 
         try {
-            File attributionErrorsZipfile = IOUtils.zipDirectory(new File("D:/Chaos-Folder/Testbed-14/attribution_errors"));
+            File attributionErrorsZipfile = IOUtils.zipDirectory(new File("/usr/share/testbed-14/attribution_errors"));
 
             outputMap.put(outputIDAttributionErrors, new GenericFileDataBinding(new GenericFileData(attributionErrorsZipfile, "application/zip")));
 
@@ -151,7 +151,7 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         }
 
         try {
-            File conditionReportsZipfile = IOUtils.zipDirectory(new File("D:/Chaos-Folder/Testbed-14/condition_reports"));
+            File conditionReportsZipfile = IOUtils.zipDirectory(new File("/usr/share/testbed-14/condition_reports"));
 
             outputMap.put(outputIDConditionReports, new GenericFileDataBinding(new GenericFileData(conditionReportsZipfile, "application/zip")));
 
