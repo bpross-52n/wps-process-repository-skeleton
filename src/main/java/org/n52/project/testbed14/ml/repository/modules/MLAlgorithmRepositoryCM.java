@@ -17,14 +17,17 @@
 package org.n52.project.testbed14.ml.repository.modules;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.n52.project.testbed14.ml.repository.MLAlgorithmRepository;
 import org.n52.wps.webapp.api.AlgorithmEntry;
 import org.n52.wps.webapp.api.ClassKnowingModule;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.n52.wps.webapp.api.ConfigurationKey;
 import org.n52.wps.webapp.api.FormatEntry;
 import org.n52.wps.webapp.api.types.ConfigurationEntry;
+import org.n52.wps.webapp.api.types.StringConfigurationEntry;
 
 public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
 
@@ -32,7 +35,20 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private List<AlgorithmEntry> algorithmEntries;
 
-    private List<? extends ConfigurationEntry<?>> configurationEntries = new ArrayList<>();
+//    public static final String outputDirKey = "output_dir";
+
+    public static final String jarPathKey = "jar_path";
+
+//    private ConfigurationEntry<String> outputDirEntry = new StringConfigurationEntry(outputDirKey, "Output directory", "Path to output directory, e.g. /usr/tomcat7/temp/'",
+//            true, "/usr/tomcat7/temp/");
+
+    private ConfigurationEntry<String> jarPathEntry = new StringConfigurationEntry(jarPathKey, "Jar path", "Path to executable jar.'",
+            true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT.jar");
+
+    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(jarPathEntry);
+
+//    private String outputDir;
+    private String jarPath;
 
     public MLAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
@@ -76,6 +92,24 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
     @Override
     public String getClassName() {
         return MLAlgorithmRepository.class.getName();
+    }
+
+//    public String getOutputDir() {
+//        return outputDir;
+//    }
+//
+//    @ConfigurationKey(key = outputDirKey)
+//    public void setOutputDir(String outputDir) {
+//        this.outputDir = outputDir;
+//    }
+
+    public String getJarPath() {
+        return jarPath;
+    }
+
+    @ConfigurationKey(key = jarPathKey)
+    public void setJarPath(String jarPath) {
+        this.jarPath = jarPath;
     }
 
 }

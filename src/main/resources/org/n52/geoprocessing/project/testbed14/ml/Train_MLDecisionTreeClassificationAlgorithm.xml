@@ -103,6 +103,10 @@
             <Format>
               <MimeType>image/png</MimeType>
             </Format>
+            <Format>
+              <MimeType>image/png</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
           </Supported>
         </ComplexOutput>
       </Output>

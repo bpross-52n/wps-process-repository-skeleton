@@ -13,7 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
+import org.n52.project.testbed14.ml.repository.MLAlgorithmRepository;
+import org.n52.project.testbed14.ml.repository.modules.MLAlgorithmRepositoryCM;
+import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.IOUtils;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
@@ -21,6 +25,7 @@ import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.ProcessDescription;
+import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +48,14 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private String outputIDModelParameters = "model-parameters";
     private String outputIDClassifiedImage = "classified-image";
     private String outputIDModelQuality = "model-quality";
+    private String outputDir;
+    private String jarPath;
 
     public Train_MLDecisionTreeClassificationAlgorithm(){
-
     }
 
     public Train_MLDecisionTreeClassificationAlgorithm(String processID) {
+        super();
         this.processID = processID;
     }
 
@@ -82,6 +89,13 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
     @Override
     public Map<String, IData> run(Map<String, List<IData>> inputs) throws ExceptionReport {
+
+        MLAlgorithmRepositoryCM algorithmCM = (MLAlgorithmRepositoryCM) WPSConfig.getInstance()
+                .getConfigurationModuleForClass(MLAlgorithmRepository.class.getName(),
+                        ConfigurationCategory.REPOSITORY);
+
+//        outputDir = algorithmCM.getOutputDir();
+        jarPath = algorithmCM.getJarPath();
 
         this.update("Starting process with id: " + processID);
 
@@ -129,11 +143,33 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         String trainingDataFileName = trainingDataFile.getName();
 
-        File outputFolder = new File(System.getProperty("java.io.tmpdir") + fileSeparator + UUID.randomUUID().toString().substring(0, 5));
+        File outputFolder = new File(System.getProperty("java.io.tmpdir"));
+//        File outputFolder = new File("/tmp/" + fileSeparator + UUID.randomUUID().toString().substring(0, 5));
 
-        outputFolder.mkdir();
 
-        String outputFolderPath = outputFolder.getAbsolutePath();
+        String outputFolderPath = outputFolder.getAbsolutePath() + fileSeparator;
+
+        File modelOutputFolder = new File(outputFolderPath + fileSeparator + "model");
+
+        if(modelOutputFolder.exists()){
+            try {
+                FileUtils.deleteDirectory(modelOutputFolder);
+                LOGGER.info("Deleted model output folder.");
+            } catch (Exception e) {
+                LOGGER.error("Could not delete model output folder.");
+            }
+        }
+
+        File metricsOutputFolder = new File(outputFolderPath + fileSeparator + "metrics");
+
+        if(metricsOutputFolder.exists()){
+            try {
+                FileUtils.deleteDirectory(metricsOutputFolder);
+                LOGGER.info("Deleted metrics output folder.");
+            } catch (Exception e) {
+                LOGGER.error("Could not delete metrics output folder.");
+            }
+        }
 
         this.update("Starting training run.");
 
@@ -142,10 +178,6 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         this.update("Finished training run.");
 
         //zip model and metrics folder
-
-        File modelOutputFolder = new File(outputFolderPath + fileSeparator + "model");
-
-        File metricsOutputFolder = new File(outputFolderPath + fileSeparator + "metrics");
 
         File zippedModelOutputFolder = null;
 
@@ -210,8 +242,10 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
             Runtime rt = Runtime.getRuntime();
 
-            String command = "java -jar d:/tmp/decisiontree-classification-0.0.1-SNAPSHOT.jar " + sourceDataFileName +
+            String command = "java -jar " + jarPath + " " + sourceDataFileName +
                     " " + trainingDataFileName + " " + parentFolderPath + " " + outputFolderPath;//TODO jar path from properties
+
+            LOGGER.info(command);
 
             Process proc = rt.exec(command);
 
@@ -242,9 +276,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
                 }
             }
 
-//            if(!errorString.isEmpty()){
-//                errors.add(errorString);
-//            }
+            LOGGER.info(errorString);
 
             try {
                 proc.waitFor();
