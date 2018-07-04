@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd" xml:lang="en-US" service="WPS" version="1.0.0">
   <ProcessDescription statusSupported="true" storeSupported="true" wps:processVersion="1.0.0">
-    <ows:Identifier>org.n52.geoprocessing.project.testbed14.ml.Train_MLDecisionTreeClassificationAlgorithm</ows:Identifier>
-    <ows:Title>Train_MLDecisionTreeClassificationAlgorithm</ows:Title>
-    <ows:Abstract>Train decision tree classification based on Apache Spark</ows:Abstract>
+    <ows:Identifier>org.n52.geoprocessing.project.testbed14.ml.Execute_MLDecisionTreeClassificationAlgorithm</ows:Identifier>
+    <ows:Title>Execute_MLDecisionTreeClassificationAlgorithm</ows:Title>
+    <ows:Abstract>Execute decision tree classification based on Apache Spark</ows:Abstract>
     <DataInputs>
       <Input minOccurs="1" maxOccurs="1">
         <ows:Identifier>source-data</ows:Identifier>
@@ -21,59 +21,24 @@
           </Supported>
         </ComplexData>
       </Input>
-      <Input minOccurs="1" maxOccurs="1">
-        <ows:Identifier>training-data</ows:Identifier>
-        <ows:Title>Training data</ows:Title>
-        <ComplexData>
-          <Default>
-            <Format>
-              <MimeType>application/x-geotiff</MimeType>
-            </Format>
-          </Default>
-          <Supported>
-            <Format>
-              <MimeType>application/x-geotiff</MimeType>
-            </Format>
-            <Format>
-              <MimeType>application/json</MimeType>
-            </Format>
-          </Supported>
-        </ComplexData>
-      </Input>
       <Input minOccurs="0" maxOccurs="1">
-        <ows:Identifier>initial-model-parameters</ows:Identifier>
-        <ows:Title>Initial model parameters</ows:Title>
+        <ows:Identifier>model-parameters</ows:Identifier>
+        <ows:Title>Model parameters</ows:Title>
         <ComplexData>
           <Default>
             <Format>
-              <MimeType>application/json</MimeType>
+              <MimeType>application/zip</MimeType>
             </Format>
           </Default>
           <Supported>
             <Format>
-              <MimeType>application/json</MimeType>
+              <MimeType>application/zip</MimeType>
             </Format>
           </Supported>
         </ComplexData>
       </Input>
     </DataInputs>
     <ProcessOutputs>
-      <Output>
-        <ows:Identifier>model-parameters</ows:Identifier>
-        <ows:Title>Model parameters</ows:Title>
-        <ComplexOutput>
-          <Default>
-            <Format>
-              <MimeType>application/zip</MimeType>
-            </Format>
-          </Default>
-          <Supported>
-            <Format>
-              <MimeType>application/zip</MimeType>
-            </Format>
-          </Supported>
-        </ComplexOutput>
-      </Output>
       <Output>
         <ows:Identifier>model-quality</ows:Identifier>
         <ows:Title>Model quality indicators</ows:Title>
@@ -96,16 +61,12 @@
         <ComplexOutput>
           <Default>
             <Format>
-              <MimeType>image/png</MimeType>
+              <MimeType>application/x-geotiff</MimeType>
             </Format>
           </Default>
           <Supported>
             <Format>
-              <MimeType>image/png</MimeType>
-            </Format>
-            <Format>
-              <MimeType>image/png</MimeType>
-              <Encoding>base64</Encoding>
+              <MimeType>application/x-geotiff</MimeType>
             </Format>
           </Supported>
         </ComplexOutput>

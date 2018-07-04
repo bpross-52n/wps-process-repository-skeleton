@@ -49,20 +49,20 @@ public class MLAlgorithmRepository implements
             .getLogger(MLAlgorithmRepository.class);
     private Map<String, ProcessDescription> processDescriptionMap;
     private Map<String, IAlgorithm> algorithmMap;
-    private ConfigurationModule exampleAlgorithmRepoConfigModule;
+    private ConfigurationModule mlAlgorithmRepoConfigModule;
 
     public MLAlgorithmRepository() {
         processDescriptionMap = new HashMap<String, ProcessDescription>();
         algorithmMap = new HashMap<String, IAlgorithm>();
 
-        exampleAlgorithmRepoConfigModule = WPSConfig.getInstance()
+        mlAlgorithmRepoConfigModule = WPSConfig.getInstance()
                 .getConfigurationModuleForClass(this.getClass().getName(),
                         ConfigurationCategory.REPOSITORY);
 
         // check if the repository is active
-        if (exampleAlgorithmRepoConfigModule.isActive()) {
+        if (mlAlgorithmRepoConfigModule.isActive()) {
 
-            List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
+            List<AlgorithmEntry> algorithmEntries = mlAlgorithmRepoConfigModule
                     .getAlgorithmEntries();
 
             for (AlgorithmEntry algorithmEntry : algorithmEntries) {
@@ -81,9 +81,8 @@ public class MLAlgorithmRepository implements
 
     public IAlgorithm getAlgorithm(String className) {
         if(getAlgorithmNames().contains(className)){
-
-            return new Train_MLDecisionTreeClassificationAlgorithm(className);
-//            return algorithmMap.get(className);
+//            return new Train_MLDecisionTreeClassificationAlgorithm(className);
+            return algorithmMap.get(className);
         }
         return null;
     }
@@ -92,7 +91,7 @@ public class MLAlgorithmRepository implements
 
         Collection<String> algorithmNames = new ArrayList<>();
 
-        List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
+        List<AlgorithmEntry> algorithmEntries = mlAlgorithmRepoConfigModule
                 .getAlgorithmEntries();
 
         for (AlgorithmEntry algorithmEntry : algorithmEntries) {

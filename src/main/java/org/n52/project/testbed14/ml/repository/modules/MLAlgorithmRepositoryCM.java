@@ -35,20 +35,21 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private List<AlgorithmEntry> algorithmEntries;
 
-//    public static final String outputDirKey = "output_dir";
+    public static final String trainingJarPathKey = "training_jar_path";
 
-    public static final String jarPathKey = "jar_path";
+    public static final String executionJarPathKey = "execution_jar_path";
 
-//    private ConfigurationEntry<String> outputDirEntry = new StringConfigurationEntry(outputDirKey, "Output directory", "Path to output directory, e.g. /usr/tomcat7/temp/'",
-//            true, "/usr/tomcat7/temp/");
-
-    private ConfigurationEntry<String> jarPathEntry = new StringConfigurationEntry(jarPathKey, "Jar path", "Path to executable jar.'",
+    private ConfigurationEntry<String> trainingJarPathEntry = new StringConfigurationEntry(trainingJarPathKey, "Jar path for training", "Path to executable jar for training.'",
             true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT.jar");
 
-    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(jarPathEntry);
+    private ConfigurationEntry<String> executionJarPathEntry = new StringConfigurationEntry(executionJarPathKey, "Jar path for execution", "Path to executable jar for classification execution.'",
+            true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT-execution.jar");
 
-//    private String outputDir;
-    private String jarPath;
+    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(trainingJarPathEntry, executionJarPathEntry);
+
+    private String trainingJarPath;
+
+    private String executionJarPath;
 
     public MLAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
@@ -94,22 +95,22 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
         return MLAlgorithmRepository.class.getName();
     }
 
-//    public String getOutputDir() {
-//        return outputDir;
-//    }
-//
-//    @ConfigurationKey(key = outputDirKey)
-//    public void setOutputDir(String outputDir) {
-//        this.outputDir = outputDir;
-//    }
-
-    public String getJarPath() {
-        return jarPath;
+    public String getTrainingJarPath() {
+        return trainingJarPath;
     }
 
-    @ConfigurationKey(key = jarPathKey)
-    public void setJarPath(String jarPath) {
-        this.jarPath = jarPath;
+    @ConfigurationKey(key = trainingJarPathKey)
+    public void setTrainingJarPath(String trainingJarPath) {
+        this.trainingJarPath = trainingJarPath;
+    }
+
+    public String getExecutionJarPath() {
+        return executionJarPath;
+    }
+
+    @ConfigurationKey(key = executionJarPathKey)
+    public void setExecutionJarPath(String executionJarPath) {
+        this.executionJarPath = executionJarPath;
     }
 
 }

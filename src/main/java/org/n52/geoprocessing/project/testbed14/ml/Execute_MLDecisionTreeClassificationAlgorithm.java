@@ -1,17 +1,26 @@
 package org.n52.geoprocessing.project.testbed14.ml;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
 import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
@@ -31,48 +40,47 @@ import org.slf4j.LoggerFactory;
 
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
-public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObservableAlgorithm {
+public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObservableAlgorithm {
 
-    private static Logger LOGGER = LoggerFactory
-            .getLogger(Train_MLDecisionTreeClassificationAlgorithm.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Execute_MLDecisionTreeClassificationAlgorithm.class);
 
     private final String fileSeparator = System.getProperty("file.separator");
+
     private final String lineSeparator = System.getProperty("line.separator");
 
     private List<String> errors = new ArrayList<>();
 
     private String processID;
+
     private final String inputIDSourceData = "source-data";
-    private final String inputIDTrainingData = "training-data";
-    private final String inputIDInitialModelParameters = "initial-model-parameters";
-    private String outputIDModelParameters = "model-parameters";
+
+    private final String inputIDModelParameters = "model-parameters";
+
     private String outputIDClassifiedImage = "classified-image";
+
     private String outputIDModelQuality = "model-quality";
-    private String outputDir;
+
     private String jarPath;
 
-    public Train_MLDecisionTreeClassificationAlgorithm(){
+    public Execute_MLDecisionTreeClassificationAlgorithm() {
     }
 
-    public Train_MLDecisionTreeClassificationAlgorithm(String processID) {
+    public Execute_MLDecisionTreeClassificationAlgorithm(String processID) {
         super();
         this.processID = processID;
     }
 
     @Override
     public List<String> getErrors() {
-        return errors ;
+        return errors;
     }
 
     @Override
     public Class<?> getInputDataType(String id) {
-        if(id.equals(inputIDSourceData)){
+        if (id.equals(inputIDSourceData)) {
             return GenericFileDataBinding.class;
         }
-        if(id.equals(inputIDTrainingData)){
-            return GenericFileDataBinding.class;
-        }
-        if(id.equals(inputIDInitialModelParameters)){
+        if (id.equals(inputIDModelParameters)) {
             return GenericFileDataBinding.class;
         }
         return GenericFileDataBinding.class;
@@ -80,22 +88,19 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
     @Override
     public Class<?> getOutputDataType(String id) {
-      if(id.equals(outputIDModelParameters)){
-          return GenericFileDataBinding.class;
-      }
-      //TODO add ids
-      return GenericFileDataBinding.class;
+        // TODO add ids
+        return GenericFileDataBinding.class;
     }
 
     @Override
     public Map<String, IData> run(Map<String, List<IData>> inputs) throws ExceptionReport {
 
-        MLAlgorithmRepositoryCM algorithmCM = (MLAlgorithmRepositoryCM) WPSConfig.getInstance()
-                .getConfigurationModuleForClass(MLAlgorithmRepository.class.getName(),
-                        ConfigurationCategory.REPOSITORY);
+        MLAlgorithmRepositoryCM algorithmCM =
+                (MLAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(
+                        MLAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
 
-//        outputDir = algorithmCM.getOutputDir();
-        jarPath = algorithmCM.getTrainingJarPath();
+        // outputDir = algorithmCM.getOutputDir();
+        jarPath = algorithmCM.getExecutionJarPath();
 
         this.update("Starting process with id: " + processID);
 
@@ -103,18 +108,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         File sourceDataFile = null;
 
-        File trainingDataFile = null;
-
-        File initialModelParametersFile = null;
-
-        try {
-            IData trainingDataData = getSingleInputData(inputs, inputIDTrainingData);
-
-            trainingDataFile = ((GenericFileDataBinding)trainingDataData).getPayload().getBaseFile(false);
-        } catch (Exception e1) {
-            LOGGER.error("Could not get mandatory input: " + inputIDTrainingData);
-            throw new ExceptionReport("Could not get mandatory input.", ExceptionReport.INVALID_PARAMETER_VALUE, inputIDTrainingData);
-        }
+        File modelParametersFile = null;
 
         try {
             IData sourceDataData = getSingleInputData(inputs, inputIDSourceData);
@@ -127,42 +121,37 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         }
 
         try {
-            IData initialModelParametersData = getSingleInputData(inputs, inputIDInitialModelParameters);
+            IData modelParametersData = getSingleInputData(inputs, inputIDModelParameters);
 
-            initialModelParametersFile = ((GenericFileDataBinding)initialModelParametersData).getPayload().getBaseFile(false);
+            modelParametersFile = ((GenericFileDataBinding) modelParametersData).getPayload().getBaseFile(false);
         } catch (Exception e1) {
-            LOGGER.info("Did not get optional input: " + inputIDInitialModelParameters);
+            LOGGER.info("Did not get optional input: " + inputIDModelParameters);
         }
 
-        //get parent folder of input files
+        try {
+            IOUtils.unzipAll(modelParametersFile);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
+        // get parent folder of input files
         String parentFolderPath = sourceDataFile.getParent() + fileSeparator;
 
         LOGGER.debug("Folder of input files: " + parentFolderPath);
 
         String sourceDataFileName = sourceDataFile.getName();
 
-        String trainingDataFileName = trainingDataFile.getName();
+        String unzippedModelPath = System.getProperty("java.io.tmpdir") + fileSeparator + UUID.randomUUID().toString().substring(0, 5) + fileSeparator;
+
+        unzipFolder(unzippedModelPath, modelParametersFile.getAbsolutePath());
 
         File outputFolder = new File(System.getProperty("java.io.tmpdir"));
-//        File outputFolder = new File("/tmp/" + fileSeparator + UUID.randomUUID().toString().substring(0, 5));
-
 
         String outputFolderPath = outputFolder.getAbsolutePath() + fileSeparator;
 
-        File modelOutputFolder = new File(outputFolderPath + fileSeparator + "model");
-
-        if(modelOutputFolder.exists()){
-            try {
-                FileUtils.deleteDirectory(modelOutputFolder);
-                LOGGER.info("Deleted model output folder.");
-            } catch (Exception e) {
-                LOGGER.error("Could not delete model output folder.");
-            }
-        }
-
         File metricsOutputFolder = new File(outputFolderPath + fileSeparator + "metrics");
 
-        if(metricsOutputFolder.exists()){
+        if (metricsOutputFolder.exists()) {
             try {
                 FileUtils.deleteDirectory(metricsOutputFolder);
                 LOGGER.info("Deleted metrics output folder.");
@@ -171,33 +160,17 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
             }
         }
 
-        this.update("Starting training run.");
+        this.update("Starting classification.");
 
-        trainModel(sourceDataFileName, trainingDataFileName, parentFolderPath, outputFolderPath);
+        runModel(sourceDataFileName, parentFolderPath, outputFolderPath, unzippedModelPath);
 
-        this.update("Finished training run.");
+        this.update("Finished classification.");
 
-        //zip model and metrics folder
-
-        File zippedModelOutputFolder = null;
-
-        if(modelOutputFolder.exists()){
-
-            try {
-                zippedModelOutputFolder = IOUtils.zipDirectory(modelOutputFolder);
-
-                LOGGER.info("Zipped model folder path: " + zippedModelOutputFolder.getAbsolutePath());
-            } catch (IOException e) {
-                LOGGER.error("Could not zip model output folder.", e);
-            }
-
-        }else{
-            LOGGER.error("Could not zip model output folder.");
-        }
+        // zip model and metrics folder
 
         File zippedMetricsOutputFolder = null;
 
-        if(metricsOutputFolder.exists()){
+        if (metricsOutputFolder.exists()) {
 
             try {
                 zippedMetricsOutputFolder = IOUtils.zipDirectory(metricsOutputFolder);
@@ -206,25 +179,21 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
                 LOGGER.error("Could not zip metrics output folder.", e);
             }
 
-        }else{
+        } else {
             LOGGER.error("Could not zip metrics output folder.");
         }
 
-        File classifiedImage = new File(outputFolderPath + "classification.png");
+        File classifiedImage = new File(outputFolderPath + "classification.tiff");
 
-        if(!classifiedImage.exists()){
+        if (!classifiedImage.exists()) {
             LOGGER.error("Classified image doesn't exist.");
         }
 
-        if(!zippedMetricsOutputFolder.exists() && !zippedModelOutputFolder.exists() && !classifiedImage.exists()){
-            LOGGER.error("Something did go wrong with executing the model.");
-            throw new ExceptionReport("Something did go wrong with executing the model.", ExceptionReport.NO_APPLICABLE_CODE);
-        }
-
         try {
-            outputMap.put(outputIDModelParameters, new GenericFileDataBinding(new GenericFileData(zippedModelOutputFolder, "application/zip")));
-            outputMap.put(outputIDModelQuality, new GenericFileDataBinding(new GenericFileData(zippedMetricsOutputFolder, "application/zip")));
-            outputMap.put(outputIDClassifiedImage, new GenericFileDataBinding(new GenericFileData(classifiedImage, "image/png")));
+            outputMap.put(outputIDModelQuality,
+                    new GenericFileDataBinding(new GenericFileData(zippedMetricsOutputFolder, "application/zip")));
+            outputMap.put(outputIDClassifiedImage,
+                    new GenericFileDataBinding(new GenericFileData(classifiedImage, "application/x-geotiff")));
         } catch (IOException e) {
             LOGGER.error("Could not create process outputs", e);
         }
@@ -234,7 +203,10 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         return outputMap;
     }
 
-    private void trainModel(String sourceDataFileName, String trainingDataFileName, String parentFolderPath, String outputFolderPath){
+    private void runModel(String sourceDataFileName,
+            String parentFolderPath,
+            String outputFolderPath,
+            String modelParametersFileName) {
 
         try {
 
@@ -242,8 +214,8 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
             Runtime rt = Runtime.getRuntime();
 
-            String command = "java -jar " + jarPath + " " + sourceDataFileName +
-                    " " + trainingDataFileName + " " + parentFolderPath + " " + outputFolderPath;//TODO jar path from properties
+            String command = "java -jar " + jarPath + " " + sourceDataFileName + " " + parentFolderPath + " "
+                    + outputFolderPath + " " + modelParametersFileName;
 
             LOGGER.info(command);
 
@@ -254,18 +226,17 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
             PipedInputStream pipedIn = new PipedInputStream(pipedOut);
 
             // attach error stream reader
-            JavaProcessStreamReader errorStreamReader = new JavaProcessStreamReader(proc
-                    .getErrorStream(), "ERROR", pipedOut);
+            JavaProcessStreamReader errorStreamReader =
+                    new JavaProcessStreamReader(proc.getErrorStream(), "ERROR", pipedOut);
 
             // attach output stream reader
-            JavaProcessStreamReader outputStreamReader = new JavaProcessStreamReader(proc
-                    .getInputStream(), "OUTPUT");
+            JavaProcessStreamReader outputStreamReader = new JavaProcessStreamReader(proc.getInputStream(), "OUTPUT");
 
             // start them
             errorStreamReader.start();
             outputStreamReader.start();
 
-            //fetch errors if there are any
+            // fetch errors if there are any
             String errorString = "";
             try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(pipedIn));) {
                 String line = errorReader.readLine();
@@ -282,7 +253,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
                 proc.waitFor();
             } catch (InterruptedException e1) {
                 LOGGER.error("Java proces was interrupted.", e1);
-            }finally{
+            } finally {
                 proc.destroy();
             }
 
@@ -293,24 +264,62 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
     }
 
-    private IData getSingleInputData(Map<String, List<IData>> inputs, String id) throws Exception{
+    private IData getSingleInputData(Map<String, List<IData>> inputs,
+            String id) throws Exception {
 
         List<IData> inputList = inputs.get(id);
 
         return inputList.get(0);
     }
 
+    private void unzipFolder(String outputFolderPath,
+            String fileName) {
+
+        try (ZipFile file = new ZipFile(fileName)) {
+            FileSystem fileSystem = FileSystems.getDefault();
+
+            Enumeration<? extends ZipEntry> entries = file.entries();
+
+            String uncompressedDirectory = outputFolderPath;
+            Files.createDirectory(fileSystem.getPath(uncompressedDirectory));
+
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+
+                if (entry.isDirectory()) {
+                    LOGGER.trace("Creating Directory:" + uncompressedDirectory + entry.getName());
+                    Files.createDirectories(fileSystem.getPath(uncompressedDirectory + entry.getName()));
+                } else {
+                    InputStream is = file.getInputStream(entry);
+                    BufferedInputStream bis = new BufferedInputStream(is);
+                    String uncompressedFileName = uncompressedDirectory + entry.getName();
+                    Path uncompressedFilePath = fileSystem.getPath(uncompressedFileName);
+                    Files.createFile(uncompressedFilePath);
+                    FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName);
+                    while (bis.available() > 0) {
+                        fileOutput.write(bis.read());
+                    }
+                    fileOutput.close();
+                    LOGGER.trace("Written :" + entry.getName());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Could not unzip folder.", e);
+        }
+    }
+
     @Override
     public ProcessDescription getDescription() {
 
         try {
-            InputStream in = getClass().getResourceAsStream("Train_MLDecisionTreeClassificationAlgorithm.xml");
+            InputStream in = getClass().getResourceAsStream("Execute_MLDecisionTreeClassificationAlgorithm.xml");
 
             ProcessDescriptionsDocument processDescriptionsDocument = ProcessDescriptionsDocument.Factory.parse(in);
 
             ProcessDescription processDescription = new ProcessDescription();
 
-            processDescription.addProcessDescriptionForVersion(processDescriptionsDocument.getProcessDescriptions().getProcessDescriptionArray(0), "1.0.0");
+            processDescription.addProcessDescriptionForVersion(
+                    processDescriptionsDocument.getProcessDescriptions().getProcessDescriptionArray(0), "1.0.0");
 
             return processDescription;
 
