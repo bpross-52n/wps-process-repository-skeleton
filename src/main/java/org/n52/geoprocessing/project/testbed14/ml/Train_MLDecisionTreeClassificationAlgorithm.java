@@ -45,7 +45,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private final String inputIDSourceData = "source-data";
     private final String inputIDTrainingData = "training-data";
     private final String inputIDInitialModelParameters = "initial-model-parameters";
-    private String outputIDModelParameters = "model-parameters";
+    private String outputIDModelParameters = "model";
     private String outputIDClassifiedImage = "classified-image";
     private String outputIDModelQuality = "model-quality";
     private String outputDir;

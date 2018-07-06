@@ -3,6 +3,7 @@ package org.n52.geoprocessing.project.testbed14.ml;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,9 @@ import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.IOUtils;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
+import org.n52.wps.io.data.binding.complex.GTRasterDataBinding;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.io.datahandler.parser.GeotiffParser;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.ProcessDescription;
@@ -54,7 +57,7 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
 
     private final String inputIDSourceData = "source-data";
 
-    private final String inputIDModelParameters = "model-parameters";
+    private final String inputIDModelParameters = "model";
 
     private String outputIDClassifiedImage = "classified-image";
 
@@ -88,7 +91,12 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
 
     @Override
     public Class<?> getOutputDataType(String id) {
-        // TODO add ids
+        if (id.equals(outputIDModelQuality)) {
+            return GenericFileDataBinding.class;
+        }
+        if (id.equals(outputIDClassifiedImage)) {
+            return GTRasterDataBinding.class;
+        }
         return GenericFileDataBinding.class;
     }
 
@@ -192,8 +200,10 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
         try {
             outputMap.put(outputIDModelQuality,
                     new GenericFileDataBinding(new GenericFileData(zippedMetricsOutputFolder, "application/zip")));
+
             outputMap.put(outputIDClassifiedImage,
-                    new GenericFileDataBinding(new GenericFileData(classifiedImage, "application/x-geotiff")));
+                    new GeotiffParser().parse(new FileInputStream(classifiedImage), "application/x-geotiff", null));
+
         } catch (IOException e) {
             LOGGER.error("Could not create process outputs", e);
         }

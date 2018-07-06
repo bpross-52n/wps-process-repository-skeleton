@@ -43,7 +43,7 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
             true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT.jar");
 
     private ConfigurationEntry<String> executionJarPathEntry = new StringConfigurationEntry(executionJarPathKey, "Jar path for execution", "Path to executable jar for classification execution.'",
-            true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT-execution.jar");
+            true, "/usr/share/decisiontree-classification-execution-0.0.1-SNAPSHOT.jar");
 
     private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(trainingJarPathEntry, executionJarPathEntry);
 

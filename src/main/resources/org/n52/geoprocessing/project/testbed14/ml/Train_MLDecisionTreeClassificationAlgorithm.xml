@@ -59,8 +59,8 @@
     </DataInputs>
     <ProcessOutputs>
       <Output>
-        <ows:Identifier>model-parameters</ows:Identifier>
-        <ows:Title>Model parameters</ows:Title>
+        <ows:Identifier>model</ows:Identifier>
+        <ows:Title>The model</ows:Title>
         <ComplexOutput>
           <Default>
             <Format>

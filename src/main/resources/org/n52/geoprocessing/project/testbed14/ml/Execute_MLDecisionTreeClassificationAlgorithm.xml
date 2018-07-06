@@ -22,8 +22,8 @@
         </ComplexData>
       </Input>
       <Input minOccurs="0" maxOccurs="1">
-        <ows:Identifier>model-parameters</ows:Identifier>
-        <ows:Title>Model parameters</ows:Title>
+        <ows:Identifier>model</ows:Identifier>
+        <ows:Title>The model</ows:Title>
         <ComplexData>
           <Default>
             <Format>
@@ -67,6 +67,9 @@
           <Supported>
             <Format>
               <MimeType>application/x-geotiff</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/wcs</MimeType>
             </Format>
           </Supported>
         </ComplexOutput>
