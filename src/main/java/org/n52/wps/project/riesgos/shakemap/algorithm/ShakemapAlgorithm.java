@@ -1,4 +1,4 @@
-package org.n52.geoprocessing.example.algorithm;
+package org.n52.wps.project.riesgos.shakemap.algorithm;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
-public class GenericExampleAlgorithm extends AbstractObservableAlgorithm {
+public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
 
     private static Logger LOGGER = LoggerFactory
-            .getLogger(GenericExampleAlgorithm.class);
+            .getLogger(ShakemapAlgorithm.class);
 
     private List<String> errors = new ArrayList<>();
 
@@ -27,11 +27,11 @@ public class GenericExampleAlgorithm extends AbstractObservableAlgorithm {
     private final String inputID = "input";
     private String outputID = "output";
 
-    public GenericExampleAlgorithm(){
+    public ShakemapAlgorithm(){
 
     }
 
-    public GenericExampleAlgorithm(String processID) {
+    public ShakemapAlgorithm(String processID) {
         this.processID = processID;
     }
 

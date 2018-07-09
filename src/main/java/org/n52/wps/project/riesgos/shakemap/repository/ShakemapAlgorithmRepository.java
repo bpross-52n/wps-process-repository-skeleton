@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.n52.geoprocessing.example.repository;
+package org.n52.wps.project.riesgos.shakemap.repository;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.n52.geoprocessing.example.algorithm.GenericExampleAlgorithm;
 import org.n52.wps.algorithm.annotation.Algorithm;
 import org.n52.wps.commons.WPSConfig;
+import org.n52.wps.project.riesgos.shakemap.algorithm.ShakemapAlgorithm;
 import org.n52.wps.server.AbstractAnnotatedAlgorithm;
 import org.n52.wps.server.IAlgorithm;
 import org.n52.wps.server.ITransactionalAlgorithmRepository;
@@ -42,16 +42,16 @@ import org.slf4j.LoggerFactory;
  * @author foerster, pross
  *
  */
-public class ExampleAlgorithmRepository implements
+public class ShakemapAlgorithmRepository implements
         ITransactionalAlgorithmRepository {
 
     private static Logger LOGGER = LoggerFactory
-            .getLogger(ExampleAlgorithmRepository.class);
+            .getLogger(ShakemapAlgorithmRepository.class);
     private Map<String, ProcessDescription> processDescriptionMap;
     private Map<String, IAlgorithm> algorithmMap;
     private ConfigurationModule exampleAlgorithmRepoConfigModule;
 
-    public ExampleAlgorithmRepository() {
+    public ShakemapAlgorithmRepository() {
         processDescriptionMap = new HashMap<String, ProcessDescription>();
         algorithmMap = new HashMap<String, IAlgorithm>();
 
@@ -82,7 +82,7 @@ public class ExampleAlgorithmRepository implements
     public IAlgorithm getAlgorithm(String className) {
         if(getAlgorithmNames().contains(className)){
 
-            return new GenericExampleAlgorithm(className);
+            return new ShakemapAlgorithm(className);
 //            return algorithmMap.get(className);
         }
         return null;
@@ -110,7 +110,7 @@ public class ExampleAlgorithmRepository implements
 
     private IAlgorithm loadAlgorithm(String algorithmClassName)
             throws Exception {
-        Class<?> algorithmClass = ExampleAlgorithmRepository.class
+        Class<?> algorithmClass = ShakemapAlgorithmRepository.class
                 .getClassLoader().loadClass(algorithmClassName);
         IAlgorithm algorithm = null;
         if (IAlgorithm.class.isAssignableFrom(algorithmClass)) {
