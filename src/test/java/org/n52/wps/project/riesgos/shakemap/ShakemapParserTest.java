@@ -58,7 +58,7 @@ import org.n52.wps.project.riesgos.shakemap.io.ShakemapParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridType;
+import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument;
 
 /**
  * Test class for GeoJSON parser and generator
@@ -91,9 +91,9 @@ public class ShakemapParserTest extends AbstractTestCase<ShakemapParser> {
 
         Assert.assertTrue(theBinding.getPayload() != null);
 
-        ShakemapGridType shakemapGrid = theBinding.getPayload();
+        ShakemapGridDocument shakemapGrid = theBinding.getPayload();
 
-        Assert.assertTrue(shakemapGrid.getEventId().equals("us2000fzwt"));
+        Assert.assertTrue(shakemapGrid.getShakemapGrid().getEventId().equals("us2000fzwt"));
 
     }
 

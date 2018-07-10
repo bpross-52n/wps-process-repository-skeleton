@@ -2,8 +2,7 @@ package org.n52.wps.project.riesgos.shakemap.io;
 
 import org.n52.wps.io.data.IComplexData;
 
-import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGrid;
-import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridType;
+import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument;
 
 public class ShakemapDataBinding implements IComplexData {
 
@@ -12,20 +11,20 @@ public class ShakemapDataBinding implements IComplexData {
      */
     private static final long serialVersionUID = 5635195859106892797L;
 
-    private ShakemapGridType shakemapGrid;
+    private ShakemapGridDocument shakemapGrid;
 
-    public ShakemapDataBinding(ShakemapGridType shakemapGrid) {
+    public ShakemapDataBinding(ShakemapGridDocument shakemapGrid) {
         this.shakemapGrid = shakemapGrid;
     }
 
     @Override
-    public ShakemapGridType getPayload() {
+    public ShakemapGridDocument getPayload() {
         return shakemapGrid;
     }
 
     @Override
-    public Class<ShakemapGrid> getSupportedClass() {
-        return ShakemapGrid.class;
+    public Class<ShakemapGridDocument> getSupportedClass() {
+        return ShakemapGridDocument.class;
     }
 
     @Override

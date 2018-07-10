@@ -80,7 +80,7 @@ public class ShakemapParser extends AbstractParser {
         try {
             shakemapGrid = ShakemapGridDocument.Factory.parse(stream);
 
-            return new ShakemapDataBinding(shakemapGrid.getShakemapGrid());
+            return new ShakemapDataBinding(shakemapGrid);
         } catch (XmlException | IOException e) {
             LOGGER.error("Could not parse InputStream.", e);
             throw new IllegalArgumentException("Could not parse InputStream.", e);

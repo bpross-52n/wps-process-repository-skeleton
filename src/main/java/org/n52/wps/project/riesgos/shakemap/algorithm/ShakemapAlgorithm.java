@@ -67,7 +67,7 @@ public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
             throw new ExceptionReport("Could not parse Shakemap.", ExceptionReport.NO_APPLICABLE_CODE, e);
         }
 
-        ShakemapDataBinding shakemapDataBinding = new ShakemapDataBinding(shakemapGridDocument.getShakemapGrid());
+        ShakemapDataBinding shakemapDataBinding = new ShakemapDataBinding(shakemapGridDocument);
 
         Map<String, IData> outputMap = new HashMap<String, IData>(1);
 
