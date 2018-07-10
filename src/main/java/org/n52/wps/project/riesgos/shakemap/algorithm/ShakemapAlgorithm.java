@@ -1,19 +1,23 @@
 package org.n52.wps.project.riesgos.shakemap.algorithm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.xmlbeans.XmlException;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.project.riesgos.shakemap.io.ShakemapDataBinding;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.ProcessDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument;
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
 public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
@@ -24,8 +28,7 @@ public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
     private List<String> errors = new ArrayList<>();
 
     private String processID;
-    private final String inputID = "input";
-    private String outputID = "output";
+    private String outputID = "shakemap";
 
     public ShakemapAlgorithm(){
 
@@ -42,41 +45,35 @@ public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
 
     @Override
     public Class<?> getInputDataType(String id) {
-        //ignore check for right id atm
-//        if(id.equals("myID")){
-//            return MyDataBinding.class;
-//        }
         return GenericFileDataBinding.class;
     }
 
     @Override
     public Class<?> getOutputDataType(String id) {
-        //ignore check for right id atm
-//      if(id.equals("myID")){
-//          return MyDataBinding.class;
-//      }
-        return GenericFileDataBinding.class;
+        return ShakemapDataBinding.class;
     }
 
     @Override
     public Map<String, IData> run(Map<String, List<IData>> inputs) throws ExceptionReport {
         LOGGER.info("Starting process with id: " + processID);
-        this.update("Starting process with id: " + processID);
 
-        //now you can do what you want, e.g. start an external program based on the processID
-        //for this example, we will just return the input as process output
+        InputStream in = getClass().getResourceAsStream("us2000fzwt_us_1531091459400_download_grid.xml");
 
-        List<IData> inputList = inputs.get(inputID);
+        ShakemapGridDocument shakemapGridDocument;
+        try {
+            shakemapGridDocument = ShakemapGridDocument.Factory.parse(in);
+        } catch (XmlException | IOException e) {
+            LOGGER.error("Could not parse Shakemap.", e);
+            throw new ExceptionReport("Could not parse Shakemap.", ExceptionReport.NO_APPLICABLE_CODE, e);
+        }
 
-        //we just take the first input, omitting a check for the list size
-        IData inputData = inputList.get(0);
+        ShakemapDataBinding shakemapDataBinding = new ShakemapDataBinding(shakemapGridDocument.getShakemapGrid());
 
         Map<String, IData> outputMap = new HashMap<String, IData>(1);
 
-        outputMap.put(outputID, inputData);
+        outputMap.put(outputID, shakemapDataBinding);
 
         LOGGER.info("Finished process with id: " + processID);
-        this.update("Finished process with id: " + processID);
 
         return outputMap;
     }
@@ -85,7 +82,7 @@ public class ShakemapAlgorithm extends AbstractObservableAlgorithm {
     public ProcessDescription getDescription() {
 
         try {
-            InputStream in = getClass().getResourceAsStream("GenericExampleAlgorithm.xml");
+            InputStream in = getClass().getResourceAsStream("ShakemapAlgorithm.xml");
 
             ProcessDescriptionsDocument processDescriptionsDocument = ProcessDescriptionsDocument.Factory.parse(in);
 

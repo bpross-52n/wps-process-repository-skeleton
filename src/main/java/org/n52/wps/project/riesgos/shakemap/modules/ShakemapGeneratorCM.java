@@ -45,46 +45,70 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  */
-package org.n52.wps.project.riesgos.shakemap.io;
+package org.n52.wps.project.riesgos.shakemap.modules;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.xmlbeans.XmlException;
-import org.n52.wps.io.datahandler.parser.AbstractParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.n52.wps.project.riesgos.shakemap.io.ShakemapGenerator;
+import org.n52.wps.project.riesgos.shakemap.io.ShakemapParser;
+import org.n52.wps.webapp.api.AlgorithmEntry;
+import org.n52.wps.webapp.api.ClassKnowingModule;
+import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.n52.wps.webapp.api.FormatEntry;
+import org.n52.wps.webapp.api.types.ConfigurationEntry;
 
-import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument;
+public class ShakemapGeneratorCM extends ClassKnowingModule{
 
-/**
- * This parser parses XML data in the USGS shakemap format
- *
- * @author Benjamin Pross
- *
- */
-public class ShakemapParser extends AbstractParser {
+    private boolean isActive = true;
 
-    private static Logger LOGGER = LoggerFactory
-            .getLogger(ShakemapParser.class);
+    private List<? extends ConfigurationEntry<?>> configurationEntries;
 
-    public ShakemapParser() {
-        super();
-        supportedIDataTypes.add(ShakemapDataBinding.class);
+    private List<FormatEntry> formatEntries;
+
+    public ShakemapGeneratorCM(){
+        formatEntries = new ArrayList<>();
+        configurationEntries = new ArrayList<>();
     }
 
-    public ShakemapDataBinding parse(InputStream stream, String mimeType, String schema) {
+    @Override
+    public String getModuleName() {
+        return "Shakemap generator";
+    }
 
-        ShakemapGridDocument shakemapGrid;
+    @Override
+    public boolean isActive() {
+        return isActive;
+    }
 
-        try {
-            shakemapGrid = ShakemapGridDocument.Factory.parse(stream);
+    @Override
+    public void setActive(boolean active) {
+        this.isActive = active;
+    }
 
-            return new ShakemapDataBinding(shakemapGrid.getShakemapGrid());
-        } catch (XmlException | IOException e) {
-            LOGGER.error("Could not parse InputStream.", e);
-            throw new IllegalArgumentException("Could not parse InputStream.", e);
-        }
+    @Override
+    public ConfigurationCategory getCategory() {
+        return ConfigurationCategory.GENERATOR;
+    }
+
+    @Override
+    public List<? extends ConfigurationEntry<?>> getConfigurationEntries() {
+        return configurationEntries;
+    }
+
+    @Override
+    public List<AlgorithmEntry> getAlgorithmEntries() {
+        return null;
+    }
+
+    @Override
+    public List<FormatEntry> getFormatEntries() {
+        return formatEntries;
+    }
+
+    @Override
+    public String getClassName() {
+        return ShakemapGenerator.class.getName();
     }
 
 }

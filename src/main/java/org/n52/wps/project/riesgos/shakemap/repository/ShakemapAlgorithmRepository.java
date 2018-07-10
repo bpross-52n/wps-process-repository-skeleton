@@ -82,8 +82,8 @@ public class ShakemapAlgorithmRepository implements
     public IAlgorithm getAlgorithm(String className) {
         if(getAlgorithmNames().contains(className)){
 
-            return new ShakemapAlgorithm(className);
-//            return algorithmMap.get(className);
+//            return new ShakemapAlgorithm(className);
+            return algorithmMap.get(className);
         }
         return null;
     }

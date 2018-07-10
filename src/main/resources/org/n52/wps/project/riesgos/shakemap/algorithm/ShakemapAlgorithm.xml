@@ -1,40 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd" xml:lang="en-US" service="WPS" version="1.0.0">
   <ProcessDescription statusSupported="true" storeSupported="true" wps:processVersion="1.0.0">
-    <ows:Identifier>org.n52.geoprocessing.example.algorithm.GenericExampleAlgorithm</ows:Identifier>
-    <ows:Title>Example process</ows:Title>
-    <ows:Abstract>A simple echo process for complex data - get what you give.</ows:Abstract>
-    <DataInputs>
-      <Input minOccurs="0" maxOccurs="1">
-        <ows:Identifier>input</ows:Identifier>
-        <ows:Title>complexInput</ows:Title>
-        <ComplexData>
-          <Default>
-            <Format>
-              <MimeType>text/xml</MimeType>
-            </Format>
-          </Default>
-          <Supported>
-            <Format>
-              <MimeType>text/xml</MimeType>
-            </Format>
-          </Supported>
-        </ComplexData>
-      </Input>
-    </DataInputs>
+    <ows:Identifier>org.n52.wps.project.riesgos.shakemap.algorithm.ShakemapAlgorithm</ows:Identifier>
+    <ows:Title>Shakemap algorithm</ows:Title>
+    <ows:Abstract>Produces an example shakemap.</ows:Abstract>
     <ProcessOutputs>
       <Output>
-        <ows:Identifier>output</ows:Identifier>
-        <ows:Title>complexOutput</ows:Title>
+        <ows:Identifier>shakemap</ows:Identifier>
+        <ows:Title>shakemap</ows:Title>
         <ComplexOutput>
           <Default>
             <Format>
               <MimeType>text/xml</MimeType>
+              <Schema>https://raw.githubusercontent.com/bpross-52n/shakemap-xmlbeans/master/src/main/xsd/shakemap.xsd</Schema>
             </Format>
           </Default>
           <Supported>
             <Format>
               <MimeType>text/xml</MimeType>
+              <Schema>https://raw.githubusercontent.com/bpross-52n/shakemap-xmlbeans/master/src/main/xsd/shakemap.xsd</Schema>
             </Format>
           </Supported>
         </ComplexOutput>
