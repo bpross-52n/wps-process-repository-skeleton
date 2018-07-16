@@ -14,19 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.n52.geoprocessing.example.repository.modules;
+package org.n52.wps.python.repository.modules;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.n52.geoprocessing.example.repository.ExampleAlgorithmRepository;
+import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.webapp.api.AlgorithmEntry;
 import org.n52.wps.webapp.api.ClassKnowingModule;
 import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.n52.wps.webapp.api.FormatEntry;
 import org.n52.wps.webapp.api.types.ConfigurationEntry;
 
-public class ExampleAlgorithmRepositoryCM extends ClassKnowingModule{
+public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private boolean isActive = true;
 
@@ -34,13 +34,13 @@ public class ExampleAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private List<? extends ConfigurationEntry<?>> configurationEntries = new ArrayList<>();
 
-    public ExampleAlgorithmRepositoryCM() {
+    public PythonAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
     }
 
     @Override
     public String getModuleName() {
-        return "ExampleAlgorithmRepository Configuration Module";
+        return "PythonAlgorithmRepository Configuration Module";
     }
 
     @Override
@@ -75,7 +75,7 @@ public class ExampleAlgorithmRepositoryCM extends ClassKnowingModule{
 
     @Override
     public String getClassName() {
-        return ExampleAlgorithmRepository.class.getName();
+        return PythonAlgorithmRepository.class.getName();
     }
 
 }
