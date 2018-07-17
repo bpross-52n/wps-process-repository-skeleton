@@ -7,20 +7,21 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.n52.wps.algorithm.annotation.Algorithm;
 import org.n52.wps.algorithm.annotation.ComplexDataOutput;
 import org.n52.wps.algorithm.annotation.Execute;
 import org.n52.wps.algorithm.annotation.LiteralDataInput;
+import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.python.repository.PythonAlgorithmRepository;
+import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
 import org.n52.wps.server.AbstractAnnotatedAlgorithm;
 import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,15 +79,17 @@ public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
 
     private String outputFileName;
 
-    private String outputPath;
+    private String outputDir;
 
     public GenericPythonAlgorithm() {
-        // TODO Get from config module
-        outputPath = "/tmp";
+        // TODO Get from script
         outputFileName = "selected.csv";
 
-    }
+        PythonAlgorithmRepositoryCM repositoryCM = (PythonAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(PythonAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
 
+        outputDir = repositoryCM.getOutputDir();
+
+    }
 
     @ComplexDataOutput(identifier = "selected-rows", binding = GenericFileDataBinding.class)
     public GenericFileData getResult() {
@@ -214,7 +217,7 @@ public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
             LOGGER.error("Exception occurred while trying to execute python script.", e);
         }
 
-        File selectedRowCVSFile = new File(outputPath + "/" + outputFileName);
+        File selectedRowCVSFile = new File(outputDir + "/" + outputFileName);
 
         try {
             selectedRows = new GenericFileData(selectedRowCVSFile, "text/csv");

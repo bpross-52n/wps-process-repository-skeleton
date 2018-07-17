@@ -9,7 +9,7 @@
 	<dependencySets>
 		<dependencySet>
 			<includes>
-				<include>org.n52.wps-extension:process-repository-skeleton</include>
+				<include>org.n52.wps-extension:python-process-repository</include>
 			</includes>
 			<outputDirectory>deploy-to-wps</outputDirectory>
 		</dependencySet>

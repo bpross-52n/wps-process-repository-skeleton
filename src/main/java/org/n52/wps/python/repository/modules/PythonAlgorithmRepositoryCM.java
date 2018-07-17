@@ -17,14 +17,17 @@
 package org.n52.wps.python.repository.modules;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.webapp.api.AlgorithmEntry;
 import org.n52.wps.webapp.api.ClassKnowingModule;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.n52.wps.webapp.api.ConfigurationKey;
 import org.n52.wps.webapp.api.FormatEntry;
 import org.n52.wps.webapp.api.types.ConfigurationEntry;
+import org.n52.wps.webapp.api.types.StringConfigurationEntry;
 
 public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
 
@@ -32,7 +35,14 @@ public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private List<AlgorithmEntry> algorithmEntries;
 
-    private List<? extends ConfigurationEntry<?>> configurationEntries = new ArrayList<>();
+    public static final String outputDirKey = "output_dir";
+
+    private ConfigurationEntry<String> outputDirEntry = new StringConfigurationEntry(outputDirKey, "Output Directory", "Path to output Directory.",
+            true, "/tmp/");
+
+    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(outputDirEntry);
+
+    private String outputDir;
 
     public PythonAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
@@ -76,6 +86,15 @@ public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
     @Override
     public String getClassName() {
         return PythonAlgorithmRepository.class.getName();
+    }
+
+    public String getOutputDir() {
+        return outputDir;
+    }
+
+    @ConfigurationKey(key=outputDirKey)
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
     }
 
 }
