@@ -17,29 +17,29 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class TestExecute extends AbstractITClass {
-
+    
     @Autowired
     private PythonAnnotationParser parser;
 
     private static Logger LOGGER = LoggerFactory.getLogger(TestExecute.class);
-    
+
     @Test
     public void testExecute(){
-        
+
         Map<String, List<IData>> inputData = new HashMap<>();
-                
+
         inputData.put("inputVariable", Arrays.asList(new LiteralStringBinding("World!")));
-        
+
         try {
             GenericPythonProcess pythonProcess = new GenericPythonProcess("test.echo", parser);
-            
+
             pythonProcess.getDescription();
-            
+
             pythonProcess.run(inputData);
         } catch (ExceptionReport e) {
             LOGGER.error(e.getMessage());
         }
-        
+
     }
-    
+
 }

@@ -54,27 +54,27 @@ public class GenericPythonProcess extends AbstractObservableAlgorithm {
             Runtime rt = Runtime.getRuntime();
 
             //TODO check order
-            
+
 //            String command = getCommand();
 
 //            Process proc = rt.exec(command);
-            
+
             List<PythonAnnotation> inAnnotations = PythonAnnotation.filterAnnotations(this.annotations, AnnotationType.INPUT);
-            
+
             String command = "";
-            
+
             for (PythonAnnotation pythonAnnotation : inAnnotations) {
                 String id = pythonAnnotation.getStringValue(Attribute.IDENTIFIER);
-                
+
                 List<IData> data = inputData.get(id);
-                
+
                 if(data == null){
                     continue;
                 }
-                
-                command = data.get(0).getPayload().toString();                
+
+                command = data.get(0).getPayload().toString();
             }
-            
+
             Process proc = rt.exec("python3 /home/bpr/test.py " + command);
 
             PipedOutputStream pipedOut = new PipedOutputStream();
