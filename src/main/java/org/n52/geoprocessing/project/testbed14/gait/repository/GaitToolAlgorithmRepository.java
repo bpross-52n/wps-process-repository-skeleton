@@ -49,20 +49,20 @@ public class GaitToolAlgorithmRepository implements
             .getLogger(GaitToolAlgorithmRepository.class);
     private Map<String, ProcessDescription> processDescriptionMap;
     private Map<String, IAlgorithm> algorithmMap;
-    private ConfigurationModule exampleAlgorithmRepoConfigModule;
+    private ConfigurationModule gaitToolAlgorithmRepoConfigModule;
 
     public GaitToolAlgorithmRepository() {
         processDescriptionMap = new HashMap<String, ProcessDescription>();
         algorithmMap = new HashMap<String, IAlgorithm>();
 
-        exampleAlgorithmRepoConfigModule = WPSConfig.getInstance()
+        gaitToolAlgorithmRepoConfigModule = WPSConfig.getInstance()
                 .getConfigurationModuleForClass(this.getClass().getName(),
                         ConfigurationCategory.REPOSITORY);
 
         // check if the repository is active
-        if (exampleAlgorithmRepoConfigModule.isActive()) {
+        if (gaitToolAlgorithmRepoConfigModule.isActive()) {
 
-            List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
+            List<AlgorithmEntry> algorithmEntries = gaitToolAlgorithmRepoConfigModule
                     .getAlgorithmEntries();
 
             for (AlgorithmEntry algorithmEntry : algorithmEntries) {
@@ -92,7 +92,7 @@ public class GaitToolAlgorithmRepository implements
 
         Collection<String> algorithmNames = new ArrayList<>();
 
-        List<AlgorithmEntry> algorithmEntries = exampleAlgorithmRepoConfigModule
+        List<AlgorithmEntry> algorithmEntries = gaitToolAlgorithmRepoConfigModule
                 .getAlgorithmEntries();
 
         for (AlgorithmEntry algorithmEntry : algorithmEntries) {

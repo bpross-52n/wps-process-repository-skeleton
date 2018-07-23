@@ -24,6 +24,7 @@ import org.n52.geoprocessing.project.testbed14.gait.repository.GaitToolAlgorithm
 import org.n52.wps.webapp.api.AlgorithmEntry;
 import org.n52.wps.webapp.api.ClassKnowingModule;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.n52.wps.webapp.api.ConfigurationKey;
 import org.n52.wps.webapp.api.FormatEntry;
 import org.n52.wps.webapp.api.types.ConfigurationEntry;
 import org.n52.wps.webapp.api.types.StringConfigurationEntry;
@@ -59,7 +60,7 @@ public class GaitToolAlgorithmRepositoryCM extends ClassKnowingModule{
 
     private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(gaitHomeEntry, pythonHomeEntry, pythonPathEntry, moduleStarterHomeEntry, dataDirEntry, gisrcDirEntry, addonDirEntry);
 
-    private String grassHome;
+    private String gaitToolHome;
     private String pythonHome;
     private String pythonPath;
     private String moduleStarterHome;
@@ -109,6 +110,15 @@ public class GaitToolAlgorithmRepositoryCM extends ClassKnowingModule{
     @Override
     public String getClassName() {
         return GaitToolAlgorithmRepository.class.getName();
+    }
+
+    public String getGaitToolHome() {
+        return gaitToolHome;
+    }
+    
+    @ConfigurationKey(key = gaitHomeKey)
+    public void setGaitToolHome(String gaitToolHome) {
+        this.gaitToolHome = gaitToolHome;
     }
 
 }

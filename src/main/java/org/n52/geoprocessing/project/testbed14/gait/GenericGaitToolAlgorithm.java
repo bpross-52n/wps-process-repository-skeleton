@@ -1,7 +1,9 @@
 package org.n52.geoprocessing.project.testbed14.gait;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,7 +13,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.n52.geoprocessing.project.testbed14.gait.configmodules.GaitToolAlgorithmRepositoryCM;
+import org.n52.geoprocessing.project.testbed14.gait.repository.GaitToolAlgorithmRepository;
+import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.IOUtils;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
@@ -20,6 +26,7 @@ import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.ProcessDescription;
 import org.n52.wps.server.grass.util.JavaProcessStreamReader;
+import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +52,19 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
     private String command;
 
+    private File workspaceFolder;
+
+    private String gaitHome;
+
     public static final String OS_Name = System.getProperty("os.name");
 
     public GenericGaitToolAlgorithm() {
 
+        GaitToolAlgorithmRepositoryCM gaitToolAlgorithmRepoConfigModule = (GaitToolAlgorithmRepositoryCM) WPSConfig.getInstance()
+                .getConfigurationModuleForClass(GaitToolAlgorithmRepository.class.getName(),
+                        ConfigurationCategory.REPOSITORY);
+        
+        gaitHome = gaitToolAlgorithmRepoConfigModule.getGaitToolHome();
     }
 
     public GenericGaitToolAlgorithm(String processID) {
@@ -81,7 +97,6 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
     @Override
     public Map<String, IData> run(Map<String, List<IData>> inputs) throws ExceptionReport {
 
-        LOGGER.info("Starting process with id: " + processID);
         this.update("Starting process with id: " + processID);
 
         // now you can do what you want, e.g. start an external program based on
@@ -93,13 +108,51 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         // we just take the first input, omitting a check for the list size
         IData inputData = inputList.get(0);
 
-        Runtime rt = Runtime.getRuntime();
+        File inputZip = ((GenericFileDataBinding)inputData).getPayload().getBaseFile(true).getParentFile();
+        
+        workspaceFolder = new File(System.getProperty("java.io.tmpdir") + File.separatorChar + UUID.randomUUID().toString().substring(0, 5));
+        try {
+            workspaceFolder.mkdirs();
+        } catch (Exception e) {
+            LOGGER.error("Could not create workspace folder.");
+        }
 
-        //TODO check if data dir exists
+        String projectUUID = UUID.randomUUID().toString().substring(0, 5);
+
+        String outputFolderName = "output" + projectUUID;
+
+        // create .bat file
+        String gaitToolCommand = "gait26.exe -nogui \"" + projectUUID + ".txt\" GIFDNUNANPO \"" + outputFolderName
+                + "\" USE_DFEGMASTER META_ESRI";
+
+        String batFileName = workspaceFolder.getAbsolutePath() + File.separatorChar + projectUUID + ".bat";
 
         try {
+            writeContentToFile(gaitToolCommand, batFileName);
+        } catch (IOException e2) {
+            LOGGER.error("Could not create .bat file.", e2);
+        }
 
-            Process proc = rt.exec(getCommand(), getEnvp(), new File("C:\\Users\\IEUser\\"));//TODO get from config
+        try {
+            writeContentToFile(inputZip.getAbsolutePath(),
+                    workspaceFolder.getAbsolutePath() + File.separatorChar + projectUUID + ".txt");
+        } catch (IOException e2) {
+            LOGGER.error("Could not create .txt file.", e2);
+        }
+
+        // copy or create .bat file
+
+        // execute .bat file
+
+        // create sample.txt
+        // write output location
+
+        // run GAIT tool
+        try {
+
+            Runtime rt = Runtime.getRuntime();
+
+            Process proc = rt.exec(batFileName, getEnvp(), workspaceFolder);
 
             PipedOutputStream pipedOut = new PipedOutputStream();
 
@@ -127,6 +180,8 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
                 }
             }
 
+            LOGGER.error(errors);
+
             try {
                 proc.waitFor();
             } catch (InterruptedException e1) {
@@ -142,68 +197,63 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         Map<String, IData> outputMap = new HashMap<String, IData>(2);
 
         try {
-            File attributionErrorsZipfile = IOUtils.zipDirectory(new File("/usr/share/testbed-14/attribution_errors"));
+            File attributionErrorsZipfile = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "attribution_errors"));
 
-            outputMap.put(outputIDAttributionErrors, new GenericFileDataBinding(new GenericFileData(attributionErrorsZipfile, "application/zip")));
+            outputMap.put(outputIDAttributionErrors,
+                    new GenericFileDataBinding(new GenericFileData(attributionErrorsZipfile, "application/zip")));
 
         } catch (IOException e) {
             LOGGER.error("Could not create zipfile for attribution errors");
         }
 
         try {
-            File conditionReportsZipfile = IOUtils.zipDirectory(new File("/usr/share/testbed-14/condition_reports"));
+            File conditionReportsZipfile = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "condition_reports"));
 
-            outputMap.put(outputIDConditionReports, new GenericFileDataBinding(new GenericFileData(conditionReportsZipfile, "application/zip")));
+            outputMap.put(outputIDConditionReports,
+                    new GenericFileDataBinding(new GenericFileData(conditionReportsZipfile, "application/zip")));
 
         } catch (IOException e) {
             LOGGER.error("Could not create zipfile for attribution errors");
         }
 
-        LOGGER.info("Finished process with id: " + processID);
         this.update("Finished process with id: " + processID);
 
         return outputMap;
     }
 
-    private String getCommand() {
+    private void writeContentToFile(String content,
+            String filePath) throws IOException {
 
-        if (command == null) {
-            // command = "\"C:\\Program Files\\GAIT-WINDOWS-26\\gait26.exe\"
-            // -nogui \"sample.txt\" GIFDNUNANPO \"SampleBatchSilent\"
-            // USE_DFEGMASTER META_ESRI -silent";
-            command = "C:\\Users\\IEUser\\testbatchmode2.bat";
-        }
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File(filePath)));
 
-        return command;
+        bufferedWriter.write(content);
+
+        bufferedWriter.close();
+
     }
 
     private String[] getEnvp() {
 
-        if (envp == null) {
-          //TODO get from config
-            if (!OS_Name.startsWith("Windows")) {
-                envp = new String[] { "DISPLAY=127.0.0.1:0.0", "GAITHOME=C:\\Program Files\\GAIT-WINDOWS-26",
-                        "CYGWIN_ROOT=\\cygwin", "PATH=.;%CYGWIN_ROOT%\\bin;%CYGWIN_ROOT%\\usr\\X11R6\\bin;%PATH%",
-                        "PATH=.;\"C:\\Program Files\\GAIT-WINDOWS-26\";%PATH%",
-                        "GAIT_PROJECTS=C:\\WPS-support-files\\gait-tool", "GAIT_INCLUDE_WGS84_SHAPE_PROJECTION=ON",
-                        "GAIT_EXPORT_CONDITION_SHAPEFILE_NAME=myconditionname" };
-            } else {
-                envp = new String[] { "DISPLAY=127.0.0.1:0.0", "GAITHOME=C:\\Program Files\\GAIT-WINDOWS-26",
-                        "CYGWIN_ROOT=\\cygwin", "PATH=.;%CYGWIN_ROOT%\\bin;%CYGWIN_ROOT%\\usr\\X11R6\\bin;%PATH%",
-                        "PATH=.;\"C:\\Program Files\\GAIT-WINDOWS-26\";%PATH%",
-                        "GAIT_PROJECTS=C:\\WPS-support-files\\gait-tool", "GAIT_INCLUDE_WGS84_SHAPE_PROJECTION=ON",
-                        "GAIT_EXPORT_CONDITION_SHAPEFILE_NAME=myconditionname" };
-            }
-        }
+        String[] env = new String[] { "GAITHOME=" + gaitHome, "DISPLAY=127.0.0.1:0.0", "CYGWIN_ROOT=\\cygwin",
+                "PATH=.;%CYGWIN_ROOT%\\bin;%CYGWIN_ROOT%\\usr\\X11R6\\bin;%PATH%", "PATH=.;\"" + gaitHome + "\";%PATH%",
+                "GAIT_PROJECTS=" + workspaceFolder.getAbsolutePath() };// TODO
+                                                                       // use
+                                                                       // different
+                                                                       // variables
+                                                                       // for
+                                                                       // linux
 
-        return envp;
+        return env;
     }
 
     @Override
     public ProcessDescription getDescription() {
 
         try {
-            InputStream in = getClass().getResourceAsStream("GenericGaitToolAlgorithm.xml");//TODO get from class
+            InputStream in = getClass().getResourceAsStream("GenericGaitToolAlgorithm.xml");// TODO
+                                                                                            // get
+                                                                                            // from
+                                                                                            // class
 
             ProcessDescriptionsDocument processDescriptionsDocument = ProcessDescriptionsDocument.Factory.parse(in);
 
