@@ -115,7 +115,7 @@ public class GaitToolAlgorithmRepositoryCM extends ClassKnowingModule{
     public String getGaitToolHome() {
         return gaitToolHome;
     }
-    
+
     @ConfigurationKey(key = gaitHomeKey)
     public void setGaitToolHome(String gaitToolHome) {
         this.gaitToolHome = gaitToolHome;

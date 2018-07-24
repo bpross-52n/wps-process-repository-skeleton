@@ -46,6 +46,12 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
     private String outputIDConditionReports = "condition-reports";
 
+    private String outputIDQACRFile = "QACR_file";
+
+    private String outputIDConsolidated1LN = "consolidated1LN";
+
+    private String outputIDConsolidated1PT = "consolidated1PT";
+
     private final String lineSeparator = System.getProperty("line.separator");
 
     private String[] envp;
@@ -63,7 +69,7 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         GaitToolAlgorithmRepositoryCM gaitToolAlgorithmRepoConfigModule = (GaitToolAlgorithmRepositoryCM) WPSConfig.getInstance()
                 .getConfigurationModuleForClass(GaitToolAlgorithmRepository.class.getName(),
                         ConfigurationCategory.REPOSITORY);
-        
+
         gaitHome = gaitToolAlgorithmRepoConfigModule.getGaitToolHome();
     }
 
@@ -105,17 +111,30 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
         List<IData> inputList = inputs.get(inputID);
 
-        // we just take the first input, omitting a check for the list size
-        IData inputData = inputList.get(0);
-
-        File inputZip = ((GenericFileDataBinding)inputData).getPayload().getBaseFile(true).getParentFile();
-        
         workspaceFolder = new File(System.getProperty("java.io.tmpdir") + File.separatorChar + UUID.randomUUID().toString().substring(0, 5));
-        try {
-            workspaceFolder.mkdirs();
-        } catch (Exception e) {
-            LOGGER.error("Could not create workspace folder.");
+
+        File inputFolder = new File(workspaceFolder.getAbsolutePath() + File.separatorChar + "inputs");
+
+        inputFolder.mkdirs();
+
+        for (IData inputData : inputList) {
+
+            if(inputData instanceof GenericFileDataBinding){
+
+                try {
+                    IOUtils.unzip(((GenericFileDataBinding)inputData).getPayload().getBaseFile(false), "shp", inputFolder);
+                } catch (IOException e) {
+                    LOGGER.error("Could not unzip input.", e);
+                }
+            }
+
         }
+//
+//        try {
+//            workspaceFolder.mkdirs();
+//        } catch (Exception e) {
+//            LOGGER.error("Could not create workspace folder.");
+//        }
 
         String projectUUID = UUID.randomUUID().toString().substring(0, 5);
 
@@ -134,20 +153,13 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         }
 
         try {
-            writeContentToFile(inputZip.getAbsolutePath(),
+            writeContentToFile(inputFolder.getAbsolutePath(),
                     workspaceFolder.getAbsolutePath() + File.separatorChar + projectUUID + ".txt");
         } catch (IOException e2) {
             LOGGER.error("Could not create .txt file.", e2);
         }
 
-        // copy or create .bat file
-
         // execute .bat file
-
-        // create sample.txt
-        // write output location
-
-        // run GAIT tool
         try {
 
             Runtime rt = Runtime.getRuntime();
@@ -213,7 +225,31 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
                     new GenericFileDataBinding(new GenericFileData(conditionReportsZipfile, "application/zip")));
 
         } catch (IOException e) {
-            LOGGER.error("Could not create zipfile for attribution errors");
+            LOGGER.error("Could not create zipfile for condition reports");
+        }
+
+        try {
+            File exportedShapefilesZipfileLN1 = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1LN.shp"));
+            File exportedShapefilesZipfilePT1 = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1PT.shp"));
+
+            outputMap.put(outputIDConsolidated1LN,
+                    new GenericFileDataBinding(new GenericFileData(exportedShapefilesZipfileLN1, "application/x-zipped-shp")));
+
+            outputMap.put(outputIDConsolidated1PT,
+                    new GenericFileDataBinding(new GenericFileData(exportedShapefilesZipfilePT1, "application/x-zipped-shp")));
+
+        } catch (IOException e) {
+            LOGGER.error("Could not create zipfile for exported shapefiles");
+        }
+
+        try {
+            File ngaQACRfile = new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "QACR_files" + File.separatorChar + "NGA_QACR.doc");
+
+            outputMap.put(outputIDQACRFile,
+                    new GenericFileDataBinding(new GenericFileData(ngaQACRfile, "application/msword")));
+
+        } catch (IOException e) {
+            LOGGER.error("Could not create zipfile for NGA QACR Word document.");
         }
 
         this.update("Finished process with id: " + processID);

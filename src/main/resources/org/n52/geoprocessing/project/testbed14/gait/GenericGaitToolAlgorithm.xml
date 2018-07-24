@@ -5,7 +5,7 @@
     <ows:Title>Gait tool process</ows:Title>
     <ows:Abstract>This process encapsulates the Gait tool</ows:Abstract>
     <DataInputs>
-      <Input minOccurs="0" maxOccurs="1">
+      <Input minOccurs="1" maxOccurs="999">
         <ows:Identifier>input-features</ows:Identifier>
         <ows:Title>Input features</ows:Title>
         <ComplexData>
@@ -30,6 +30,7 @@
       <Output>
         <ows:Identifier>attribution-errors</ows:Identifier>
         <ows:Title>Attribution errors</ows:Title>
+        <ows:Abstract>Zip file containing information about attribution errors.</ows:Abstract>
         <ComplexOutput>
           <Default>
             <Format>
@@ -50,6 +51,7 @@
       <Output>
         <ows:Identifier>condition-reports</ows:Identifier>
         <ows:Title>Condition reports</ows:Title>
+        <ows:Abstract>Zip file containing information about condition reports encoded as binary files.</ows:Abstract>
         <ComplexOutput>
           <Default>
             <Format>
@@ -62,6 +64,69 @@
             </Format>
             <Format>
               <MimeType>application/zip</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+      <Output>
+        <ows:Identifier>QACR_file</ows:Identifier>
+        <ows:Title>QACR file</ows:Title>
+        <ows:Abstract>MS Word file containing information about condition reports.</ows:Abstract>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/msword</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/msword</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/msword</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+      <Output>
+        <ows:Identifier>consolidated1LN</ows:Identifier>
+        <ows:Title>Consolidated lines</ows:Title>
+        <ows:Abstract>Zipped shapefile containing consolidated line strings.</ows:Abstract>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+      <Output>
+        <ows:Identifier>consolidated1PT</ows:Identifier>
+        <ows:Title>Consilodated points</ows:Title>
+        <ows:Abstract>Zipped shapefile containing consolidated line points.</ows:Abstract>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
               <Encoding>base64</Encoding>
             </Format>
           </Supported>
