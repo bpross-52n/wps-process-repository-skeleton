@@ -103,6 +103,12 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
     @Override
     public Map<String, IData> run(Map<String, List<IData>> inputs) throws ExceptionReport {
 
+        GaitToolAlgorithmRepositoryCM gaitToolAlgorithmRepoConfigModule = (GaitToolAlgorithmRepositoryCM) WPSConfig.getInstance()
+                .getConfigurationModuleForClass(GaitToolAlgorithmRepository.class.getName(),
+                        ConfigurationCategory.REPOSITORY);
+
+        gaitHome = gaitToolAlgorithmRepoConfigModule.getGaitToolHome();
+
         this.update("Starting process with id: " + processID);
 
         // now you can do what you want, e.g. start an external program based on
@@ -229,8 +235,8 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
         }
 
         try {
-            File exportedShapefilesZipfileLN1 = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1LN.shp"));
-            File exportedShapefilesZipfilePT1 = IOUtils.zipDirectory(new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1PT.shp"));
+            File exportedShapefilesZipfileLN1 = new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1LN.shp");
+            File exportedShapefilesZipfilePT1 = new File(workspaceFolder.getAbsolutePath() + File.separatorChar + outputFolderName + File.separatorChar + "exported_shapefiles" + File.separatorChar + "consolidated1PT.shp");
 
             outputMap.put(outputIDConsolidated1LN,
                     new GenericFileDataBinding(new GenericFileData(exportedShapefilesZipfileLN1, "application/x-zipped-shp")));
