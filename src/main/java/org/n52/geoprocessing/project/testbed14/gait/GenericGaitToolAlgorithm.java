@@ -278,7 +278,7 @@ public class GenericGaitToolAlgorithm extends AbstractObservableAlgorithm {
 
         String[] env = new String[] { "GAITHOME=" + gaitHome, "DISPLAY=127.0.0.1:0.0", "CYGWIN_ROOT=\\cygwin",
                 "PATH=.;%CYGWIN_ROOT%\\bin;%CYGWIN_ROOT%\\usr\\X11R6\\bin;%PATH%", "PATH=.;\"" + gaitHome + "\";%PATH%",
-                "GAIT_PROJECTS=" + workspaceFolder.getAbsolutePath() };// TODO
+                "GAIT_PROJECTS=" + workspaceFolder.getAbsolutePath(), "GAIT_INCLUDE_WGS84_SHAPE_PROJECTION=ON" };// TODO
                                                                        // use
                                                                        // different
                                                                        // variables
