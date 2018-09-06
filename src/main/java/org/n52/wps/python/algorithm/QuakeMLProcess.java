@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 
 @Algorithm(
         version = "1.0.0")
-public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
+public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(GenericPythonAlgorithm.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(QuakeMLProcess.class);
 
     private List<String> errors = new ArrayList<>();
 
@@ -68,26 +68,32 @@ public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
     public double zmax;
 
     @LiteralDataInput(
-            identifier = "p", defaultValue = "0")
+            identifier = "p", defaultValue = "0.1")
     public double p;
 
     @LiteralDataInput(
-            identifier = "etype", allowedValues = { "historic", "deaggregation", "stochastic", "expert" }, defaultValue="historic")
+            identifier = "etype", allowedValues = { "observed", "deaggregation", "stochastic", "expert" }, defaultValue="deaggregation")
     public String etype;
+
+    @LiteralDataInput(
+            identifier = "tlon", defaultValue = "-71.5730623712764")
+    public double tlon;
+
+    @LiteralDataInput(
+            identifier = "tlat", defaultValue = "-33.1299174879672")
+    public double tlat;
 
     private GenericFileData selectedRows;
 
     private String outputFileName;
 
-    private String outputDir;
+    private String workspacePath;
 
-    public GenericPythonAlgorithm() {
+    public QuakeMLProcess() {
         // TODO Get from script
-        outputFileName = "selected.csv";
+        outputFileName = "test.xml";
 
         PythonAlgorithmRepositoryCM repositoryCM = (PythonAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(PythonAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
-
-        outputDir = repositoryCM.getOutputDir();
 
     }
 
@@ -105,77 +111,15 @@ public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
     public void runScript() throws ExceptionReport {
         LOGGER.info("Executing python script.");
 
+        workspacePath = "/home/riesgos/git/quakeledger";
+
         try {
 
             Runtime rt = Runtime.getRuntime();
 
             String command = getCommand();
 
-//            LOGGER.info(command);
-
-//            Map<String, String> sysEnv = System.getenv();
-//
-//            Iterator<Entry<String, String>> iterator = sysEnv.entrySet().iterator();
-//
-//            while(iterator
-//                            .hasNext()){
-//                Entry<String, String> entry = iterator.next();
-//
-//                LOGGER.info(entry.getKey() + " " + entry.getValue());
-//            }
-
-            String[] env = {"PATH=/home/bpr/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
-                    "XAUTHORITY=/run/user/1000/gdm/Xauthority",
-                    "XMODIFIERS=@im=ibus",
-                    "GDMSESSION=ubuntu",
-                    "XDG_DATA_DIRS=/usr/share/ubuntu:/usr/local/share:/usr/share:/var/lib/snapd/desktop",
-                    "TEXTDOMAINDIR=/usr/share/locale/",
-                    "GTK_IM_MODULE=ibus",
-                    "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
-                    "XDG_CURRENT_DESKTOP=ubuntu:GNOME",
-                    "SSH_AGENT_PID=1776",
-                    "COLORTERM=truecolor",
-                    "QT4_IM_MODULE=xim",
-                    "SESSION_MANAGER=local/ubuntu:@/tmp/.ICE-unix/1683,unix/ubuntu:/tmp/.ICE-unix/1683",
-                    "USERNAME=bpr",
-                    "LOGNAME=bpr",
-                    "PWD=/home/bpr",
-                    "IM_CONFIG_PHASE=2",
-                    "GJS_DEBUG_TOPICS=JSERROR;JSLOG",
-                    "LESSOPEN=|/usr/bin/lesspipe%s",
-                    "SHELL=/bin/bash",
-                    "GNOME_DESKTOP_SESSION_ID=this-is-deprecated",
-                    "GTK_MODULES=gail:atk-bridge",
-                    "CLUTTER_IM_MODULE=xim",
-                    "TEXTDOMAIN=im-config",
-                    "XDG_SESSION_DESKTOP=ubuntu",
-                    "SHLVL=1",
-                    "LESSCLOSE=/usr/bin/lesspipe%s%s",
-                    "QT_IM_MODULE=xim",
-                    "TERM=xterm-256color",
-                    "XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg",
-                    "GNOME_TERMINAL_SERVICE=:1.59",
-                    "LANG=en_US.UTF-8",
-                    "XDG_SESSION_TYPE=x11",
-                    "XDG_SESSION_ID=2",
-                    "DISPLAY=:0",
-                    "_=/usr/bin/java",
-                    "GPG_AGENT_INFO=/run/user/1000/gnupg/S.gpg-agent:0:1",
-                    "DESKTOP_SESSION=ubuntu",
-                    "USER=bpr",
-                    "XDG_MENU_PREFIX=gnome-",
-                    "VTE_VERSION=5201",
-                    "WINDOWPATH=2",
-                    "QT_ACCESSIBILITY=1",
-                    "GJS_DEBUG_OUTPUT=stderr",
-                    "XDG_SEAT=seat0",
-                    "SSH_AUTH_SOCK=/run/user/1000/keyring/ssh",
-                    "GNOME_SHELL_SESSION_MODE=ubuntu",
-                    "XDG_RUNTIME_DIR=/run/user/1000",
-                    "XDG_VTNR=2",
-                    "HOME=/home/bpr"};
-
-            Process proc = rt.exec(command, env);
+            Process proc = rt.exec(command, new String[]{}, new File(workspacePath));
 
             PipedOutputStream pipedOut = new PipedOutputStream();
 
@@ -217,18 +161,23 @@ public class GenericPythonAlgorithm extends AbstractAnnotatedAlgorithm {
             LOGGER.error("Exception occurred while trying to execute python script.", e);
         }
 
-        File selectedRowCVSFile = new File(outputDir + "/" + outputFileName);
+        File selectedRowCVSFile = new File(workspacePath + "/" + outputFileName);
 
         try {
-            selectedRows = new GenericFileData(selectedRowCVSFile, "text/csv");
+            selectedRows = new GenericFileData(selectedRowCVSFile, "text/xml");
         } catch (IOException e) {
             LOGGER.error("Could not create GenericFileData.", e);
         }
     }
 
     private String getCommand() {
-        return "python3 /home/bpr/eventquery.py " + lonmin + " " + lonmax + " " + latmin + " " + latmax + " " + mmin + " " + mmax
-                + " " + zmin + " " + zmax + " " + p + " " + etype;
+
+        String pythonScriptName = "eventquery.py";
+
+        // just need to execute the task manager
+//        Process proc = rt.exec("cmd.exe /c start");
+        return "python3 " + workspacePath + File.separatorChar + pythonScriptName + " " + lonmin + " " + lonmax + " " + latmin + " " + latmax + " " + mmin + " " + mmax
+                + " " + zmin + " " + zmax + " " + p + " " + etype + " " + tlon + " " + tlat;
     }
 
 }

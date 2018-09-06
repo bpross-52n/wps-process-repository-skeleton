@@ -330,6 +330,12 @@
 			<version>${xmlbeans.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.n52.wps.riesgos</groupId>
+			<artifactId>shakemap-process-repository</artifactId>
+			<version>1-SNAPSHOT</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

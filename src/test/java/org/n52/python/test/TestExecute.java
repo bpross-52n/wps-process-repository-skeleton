@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class TestExecute extends AbstractITClass {
-    
+
     @Autowired
     private PythonAnnotationParser parser;
 
