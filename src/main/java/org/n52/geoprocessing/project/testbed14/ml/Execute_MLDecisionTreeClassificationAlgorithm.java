@@ -15,6 +15,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,9 @@ import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.data.binding.complex.GTRasterDataBinding;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.io.datahandler.generator.GeoserverWCSGenerator;
 import org.n52.wps.io.datahandler.parser.GeotiffParser;
+import org.n52.wps.io.modules.generator.GeoserverWCSGeneratorCM;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.server.ProcessDescription;
@@ -64,6 +67,8 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
     private String outputIDModelQuality = "model-quality";
 
     private String jarPath;
+
+    private String modelPath;
 
     public Execute_MLDecisionTreeClassificationAlgorithm() {
     }
@@ -107,8 +112,18 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
                 (MLAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(
                         MLAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
 
+        GeoserverWCSGeneratorCM geoserverWCSGeneratorCM = (GeoserverWCSGeneratorCM) WPSConfig.getInstance().getConfigurationModuleForClass(
+                GeoserverWCSGenerator.class.getName(), ConfigurationCategory.GENERATOR);
+
         // outputDir = algorithmCM.getOutputDir();
         jarPath = algorithmCM.getExecutionJarPath();
+        modelPath = algorithmCM.getModelPath();
+
+        File modelDirectory = new File(modelPath);
+
+        String[] modelFolders = modelDirectory.list();
+
+        Arrays.sort(modelFolders);
 
         this.update("Starting process with id: " + processID);
 
@@ -136,11 +151,11 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
             LOGGER.info("Did not get optional input: " + inputIDModelParameters);
         }
 
-        try {
-            IOUtils.unzipAll(modelParametersFile);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
+//        try {
+//            IOUtils.unzipAll(modelParametersFile);
+//        } catch (Exception e) {
+//            // TODO: handle exception
+//        }
 
         // get parent folder of input files
         String parentFolderPath = sourceDataFile.getParent() + fileSeparator;
@@ -151,7 +166,13 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
 
         String unzippedModelPath = System.getProperty("java.io.tmpdir") + fileSeparator + UUID.randomUUID().toString().substring(0, 5) + fileSeparator;
 
-        unzipFolder(unzippedModelPath, modelParametersFile.getAbsolutePath());
+        if(modelParametersFile != null){
+
+            unzipFolder(unzippedModelPath, modelParametersFile.getAbsolutePath());
+        } else {
+            //use latest model
+
+        }
 
         File outputFolder = new File(System.getProperty("java.io.tmpdir"));
 
@@ -170,7 +191,9 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
 
         this.update("Starting classification.");
 
-        runModel(sourceDataFileName, parentFolderPath, outputFolderPath, unzippedModelPath);
+        String currentModelPath = modelPath + fileSeparator + modelFolders[0];
+
+        runModel(sourceDataFileName, parentFolderPath, outputFolderPath, currentModelPath);
 
         this.update("Finished classification.");
 

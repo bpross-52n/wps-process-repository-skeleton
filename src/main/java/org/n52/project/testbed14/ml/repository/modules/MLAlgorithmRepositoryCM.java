@@ -39,17 +39,24 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
 
     public static final String executionJarPathKey = "execution_jar_path";
 
-    private ConfigurationEntry<String> trainingJarPathEntry = new StringConfigurationEntry(trainingJarPathKey, "Jar path for training", "Path to executable jar for training.'",
+    private static final String modelPathKey = "model_path";
+
+    private ConfigurationEntry<String> trainingJarPathEntry = new StringConfigurationEntry(trainingJarPathKey, "Jar path for training", "Path to executable jar for training.",
             true, "/usr/share/decisiontree-classification-0.0.1-SNAPSHOT.jar");
 
-    private ConfigurationEntry<String> executionJarPathEntry = new StringConfigurationEntry(executionJarPathKey, "Jar path for execution", "Path to executable jar for classification execution.'",
+    private ConfigurationEntry<String> executionJarPathEntry = new StringConfigurationEntry(executionJarPathKey, "Jar path for execution", "Path to executable jar for classification execution.",
             true, "/usr/share/decisiontree-classification-execution-0.0.1-SNAPSHOT.jar");
 
-    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(trainingJarPathEntry, executionJarPathEntry);
+    private ConfigurationEntry<String> modelPathEntry = new StringConfigurationEntry(modelPathKey, "Jar path for execution", "Path to stored models",
+            true, "/usr/share/tb14-ml-models");
+
+    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(trainingJarPathEntry, executionJarPathEntry, modelPathEntry);
 
     private String trainingJarPath;
 
     private String executionJarPath;
+
+    private String modelPath;
 
     public MLAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
@@ -111,6 +118,15 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
     @ConfigurationKey(key = executionJarPathKey)
     public void setExecutionJarPath(String executionJarPath) {
         this.executionJarPath = executionJarPath;
+    }
+
+    public String getModelPath() {
+        return modelPath;
+    }
+
+    @ConfigurationKey(key = modelPathKey)
+    public void setModelPath(String modelPath) {
+        this.modelPath = modelPath;
     }
 
 }
