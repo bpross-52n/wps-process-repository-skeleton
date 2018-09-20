@@ -95,6 +95,7 @@ public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
 
         PythonAlgorithmRepositoryCM repositoryCM = (PythonAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(PythonAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
 
+        workspacePath = repositoryCM.getWorkspacePath() + "quakeledger/";
     }
 
     @ComplexDataOutput(identifier = "selected-rows", binding = GenericFileDataBinding.class)
@@ -110,8 +111,6 @@ public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
     @Execute
     public void runScript() throws ExceptionReport {
         LOGGER.info("Executing python script.");
-
-        workspacePath = "/home/riesgos/git/quakeledger";
 
         try {
 

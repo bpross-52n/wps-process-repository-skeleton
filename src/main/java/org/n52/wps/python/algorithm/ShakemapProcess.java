@@ -13,12 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.python.repository.PythonAlgorithmRepository;
+import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
+import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +46,10 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
     public Map<String, IData> run(Map<String, List<IData>> inputData) throws ExceptionReport {
 
         try {
+
+            PythonAlgorithmRepositoryCM algorithmRepositoryCM = (PythonAlgorithmRepositoryCM) WPSConfig.getInstance().getConfigurationModuleForClass(PythonAlgorithmRepository.class.getName(), ConfigurationCategory.REPOSITORY);
+
+            workspacePath = algorithmRepositoryCM.getWorkspacePath() + "shakyground/";
 
             Runtime rt = Runtime.getRuntime();
 
@@ -70,8 +78,6 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
             LOGGER.debug("Quakeml file: " + newQuakeMLFile.getAbsolutePath());
 
             File outputShakemap = File.createTempFile("shakemap", ".xml");
-
-            workspacePath = "/home/riesgos/git/shakyground/";
 
             String pythonScriptName = "service.py";
 

@@ -30,7 +30,7 @@ import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument.ShakemapGrid;
 public class ShakemapConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShakemapConverter.class);
-    
+
     private final String lonFieldName = "LON";
     private final String latFieldName = "LAT";
     private final String pgaFieldName = "PGA";
@@ -48,36 +48,36 @@ public class ShakemapConverter {
     private double c;
     private double b;
     private double d;
-    
+
     public ShakemapConverter(ShakemapGrid shakemapGrid) {
-        
+
         GridSpecificationType gridSpecification = shakemapGrid.getGridSpecification();
-        
+
         width  = Integer.parseInt(gridSpecification.getNlon());
         height = Integer.parseInt(gridSpecification.getNlat());
-        
+
         miny = Double.parseDouble(gridSpecification.getLatMin());
         minx = Double.parseDouble(gridSpecification.getLonMin());
         maxy = Double.parseDouble(gridSpecification.getLatMax());
         maxx = Double.parseDouble(gridSpecification.getLonMax());
-        
+
         a = width / (maxx - minx);
         c = height / (miny - maxy);
-        
+
         b = - (a * minx);
         d = - (c * maxy);
-        
+
         GridFieldType[] gridFieldArray = shakemapGrid.getGridFieldArray();
-        
+
         gridFieldsCount = gridFieldArray.length;
-         
+
         //TODO maybe create Map<String, int> for other grid fields
-        
-        //try to find indexes in grid fields        
+
+        //try to find indexes in grid fields
         for (int i = 0; i < gridFieldArray.length; i++) {
-            
+
             GridFieldType gridField = gridFieldArray[i];
-            
+
             if(gridField.getName().equalsIgnoreCase(lonFieldName)){
                 lonIndex = gridField.getIndex();
             } else if(gridField.getName().equalsIgnoreCase(latFieldName)){
@@ -85,40 +85,40 @@ public class ShakemapConverter {
             } else if(gridField.getName().equalsIgnoreCase(pgaFieldName)){
                 pgaIndex = gridField.getIndex();
             }
-            
+
         }
     }
-    
+
     public void convertGridToRaster(WritableRaster raster, InputStream in) throws NumberFormatException, IOException{
-        
+
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-        
+
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File("d:/tmp/values.txt")));
-        
+
         String line = "";
-        
+
         while((line = bufferedReader.readLine()) != null){
-            
+
             if(line.isEmpty()){
                 continue;
             }
-            
+
             double lat = 0;
             double lon = 0;
             double pga = 0;
-            
+
             for (int i = 0; i < gridFieldsCount ; i++) {
-                
+
                 //gidData is separated by blanks
                 int blankIndex = line.indexOf(" ");
-                
+
                 //check if no blanks are left. another criteria for breaking the loop
                 if(blankIndex < 0){
                     break;
                 }
-                
+
                 String part = line.substring(0, blankIndex);
-                
+
                 if(i == latIndex-1){
                     lat = Double.parseDouble(part);
                 }else if(i == lonIndex-1){
@@ -126,33 +126,33 @@ public class ShakemapConverter {
                 } else if(i == pgaIndex-1){
                     pga = Double.parseDouble(part);
                 }
-                
-                line = line.substring(blankIndex).trim();                
+
+                line = line.substring(blankIndex).trim();
             }
-            
+
             if((lat == 0) || (lon == 0)){
                 break;
             }
-            
+
             //calculate image coordinates
             double u = Math.ceil(a * lon + b);
             double v = Math.ceil(c * lat + d);
-            
+
 //            bufferedWriter.write(u + " " + v + " " + pga + "\n");
 //            bufferedWriter.write((a * lon + b) + " " + (c * lat + d) + " " + pga + "\n");
 //            bufferedWriter.write("\n");
-            
+
             raster.setSample((int)u, (int)v, 0, getIntensity(pga));
         }
-        
+
         bufferedWriter.close();
     }
-    
+
     //see https://usgs.github.io/shakemap/manual3_5/tg_intensity.html
     private int getIntensity(double pga) {
-        
+
         int intensity = 0;
-        
+
         if(pga < 0.05){
             intensity = 1;
         } else if((0.3 <= pga) && (pga < 2.8)){
@@ -172,7 +172,7 @@ public class ShakemapConverter {
         } else if(pga > 139){
             intensity = 10;
         }
-        
+
         return intensity;
     }
 
@@ -207,5 +207,5 @@ public class ShakemapConverter {
             throw new RuntimeException(e1);
         }
     }
-    
+
 }

@@ -37,12 +37,19 @@ public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
 
     public static final String outputDirKey = "output_dir";
 
+    public static final String workspacePathKey = "workspace_path";
+
     private ConfigurationEntry<String> outputDirEntry = new StringConfigurationEntry(outputDirKey, "Output Directory", "Path to output Directory.",
             true, "/tmp/");
 
-    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(outputDirEntry);
+    private ConfigurationEntry<String> workspacePathEntry = new StringConfigurationEntry(workspacePathKey, "Workspace path", "Path to workspace (python scripts, etc.).",
+            true, "/usr/share/git/");
+
+    private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(outputDirEntry, workspacePathEntry);
 
     private String outputDir;
+
+    private String workspacePath;
 
     public PythonAlgorithmRepositoryCM() {
         algorithmEntries = new ArrayList<>();
@@ -95,6 +102,15 @@ public class PythonAlgorithmRepositoryCM extends ClassKnowingModule{
     @ConfigurationKey(key=outputDirKey)
     public void setOutputDir(String outputDir) {
         this.outputDir = outputDir;
+    }
+
+    public String getWorkspacePath() {
+        return workspacePath;
+    }
+
+    @ConfigurationKey(key=workspacePathKey)
+    public void setWorkspacePath(String workspacePath) {
+        this.workspacePath = workspacePath;
     }
 
 }
