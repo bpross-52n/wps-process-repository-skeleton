@@ -47,7 +47,7 @@ public class MLAlgorithmRepositoryCM extends ClassKnowingModule{
     private ConfigurationEntry<String> executionJarPathEntry = new StringConfigurationEntry(executionJarPathKey, "Jar path for execution", "Path to executable jar for classification execution.",
             true, "/usr/share/decisiontree-classification-execution-0.0.1-SNAPSHOT.jar");
 
-    private ConfigurationEntry<String> modelPathEntry = new StringConfigurationEntry(modelPathKey, "Jar path for execution", "Path to stored models",
+    private ConfigurationEntry<String> modelPathEntry = new StringConfigurationEntry(modelPathKey, "Path to stored models", "Path to stored models",
             true, "/usr/share/tb14-ml-models");
 
     private List<? extends ConfigurationEntry<?>> configurationEntries = Arrays.asList(trainingJarPathEntry, executionJarPathEntry, modelPathEntry);

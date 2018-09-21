@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.io.FileUtils;
 import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
+import org.n52.geoprocessing.project.testbed14.ml.util.JsonUtil;
 import org.n52.project.testbed14.ml.repository.MLAlgorithmRepository;
 import org.n52.project.testbed14.ml.repository.modules.MLAlgorithmRepositoryCM;
 import org.n52.wps.commons.WPSConfig;
@@ -252,7 +254,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         File zippedModelOutputFolder = null;
 
-        String modelID = System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 5);
+        String modelID = "MD" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 5);
 
         File newDir = new File(modelPath + File.separatorChar + modelID);
 
@@ -348,6 +350,21 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
             LOGGER.error("Could not store images.", e1);
         }
 
+        //create metadata
+        File metadataFile = new File(modelOutputFolder.getAbsolutePath() + File.separator + "metadata/part-00000");
+
+        JsonUtil jsonUtil = new JsonUtil(metadataFile);
+
+        String json = jsonUtil.createJSON(modelID, featureID, imageID);
+
+        try {
+            //store metadata in Knowledge Base
+            String storeMetadataURL = "http://140.134.48.19/ML/StoreMetadata.ashx" + "?json=" + URLEncoder.encode(json, "UTF-8");
+            postData(storeMetadataURL);
+        } catch (IOException e1) {
+            LOGGER.error("Could not store metadata.", e1);
+        }
+
         if(!zippedMetricsOutputFolder.exists() && !zippedModelOutputFolder.exists() && !classifiedImage.exists()){
             LOGGER.error("Something did go wrong with executing the model.");
             throw new ExceptionReport("Something did go wrong with executing the model.", ExceptionReport.NO_APPLICABLE_CODE);
@@ -385,7 +402,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         int statusCode = client.executeMethod(requestMethod);
 
         if (!((statusCode == HttpStatus.SC_OK) || (statusCode == HttpStatus.SC_CREATED))) {
-            System.err.println("Method failed: "
+            LOGGER.error("Method failed: "
                     + requestMethod.getStatusLine());
         }
 
