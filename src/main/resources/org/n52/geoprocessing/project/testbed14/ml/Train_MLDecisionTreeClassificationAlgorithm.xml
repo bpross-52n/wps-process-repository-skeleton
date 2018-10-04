@@ -110,6 +110,37 @@
           </Supported>
         </ComplexOutput>
       </Output>
+      <Output>
+        <ows:Identifier>classified-features</ows:Identifier>
+        <ows:Title>Classified features</ows:Title>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>text/xml</MimeType>
+              <Schema>http://schemas.opengis.net/gml/3.1.1/base/feature.xsd</Schema>
+            </Format>
+            <Format>
+              <MimeType>text/xml; subtype=gml/3.1.1</MimeType>
+              <Schema>http://schemas.opengis.net/gml/3.1.1/base/feature.xsd</Schema>
+            </Format>
+            <Format>
+              <MimeType>application/vnd.geo+json</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
     </ProcessOutputs>
   </ProcessDescription>
 </wps:ProcessDescriptions>

@@ -2,6 +2,7 @@ package org.n52.geoprocessing.project.testbed14.ml;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,6 +11,7 @@ import java.io.PipedOutputStream;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,19 +23,39 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.io.FileUtils;
+import org.geotools.data.DefaultTransaction;
+import org.geotools.data.FeatureStore;
+import org.geotools.data.Transaction;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.GeometryAttributeImpl;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.feature.type.GeometryDescriptorImpl;
+import org.geotools.feature.type.GeometryTypeImpl;
+import org.geotools.filter.identity.GmlObjectIdImpl;
+import org.geotools.process.raster.PolygonExtractionProcess;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.jaitools.numeric.Range;
 import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
 import org.n52.geoprocessing.project.testbed14.ml.util.JsonUtil;
 import org.n52.project.testbed14.ml.repository.MLAlgorithmRepository;
 import org.n52.project.testbed14.ml.repository.modules.MLAlgorithmRepositoryCM;
 import org.n52.wps.commons.WPSConfig;
+import org.n52.wps.io.GTHelper;
 import org.n52.wps.io.IOUtils;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
+import org.n52.wps.io.data.binding.complex.GTRasterDataBinding;
+import org.n52.wps.io.data.binding.complex.GTVectorDataBinding;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
 import org.n52.wps.io.data.binding.literal.LiteralAnyURIBinding;
 import org.n52.wps.io.datahandler.generator.GeoServerUploader;
 import org.n52.wps.io.datahandler.generator.GeoserverWCSGenerator;
 import org.n52.wps.io.datahandler.parser.GenericFileParser;
+import org.n52.wps.io.datahandler.parser.GeotiffParser;
 import org.n52.wps.io.modules.generator.GeoserverWCSGeneratorCM;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
@@ -41,8 +63,20 @@ import org.n52.wps.server.ProcessDescription;
 import org.n52.wps.server.database.DatabaseFactory;
 import org.n52.wps.server.handler.DataInputInterceptors.DataInputInterceptorImplementations;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.opengis.feature.GeometryAttribute;
+import org.opengis.feature.IllegalAttributeException;
+import org.opengis.feature.Property;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.AttributeType;
+import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.feature.type.GeometryType;
+import org.opengis.filter.identity.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.MultiPolygon;
 
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
@@ -63,6 +97,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private final String inputIDInitialModelParameters = "initial-model-parameters";
     private String outputIDModel = "model";
     private String outputIDClassifiedImage = "classified-image";
+    private String outputIDClassifiedFeatures = "classified-features";
     private String outputIDModelQuality = "model-quality";
     private String outputDir;
     private String jarPath;
@@ -100,6 +135,9 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     public Class<?> getOutputDataType(String id) {
       if(id.equals(outputIDModel)){
           return GenericFileDataBinding.class;
+      }
+      if(id.equals(outputIDClassifiedFeatures)){
+          return GTVectorDataBinding.class;
       }
       //TODO add ids
       return GenericFileDataBinding.class;
@@ -325,22 +363,16 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
             LOGGER.error("Could not store images.", e1);
         }
 
-        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getCoverageLink;
-
         String featureID = "";
-
         try {
-            String storageResult = postData(storeFeaturesURL);
-
-            featureID = extractID(storageResult, "FeatureID");
-
-        } catch (IOException e1) {
-            LOGGER.error("Could not store images.", e1);
+            featureID = extractAndUploadFeatures(classifiedTiffImage, geoserverWCSGeneratorCM, outputMap);
+        } catch (IllegalAttributeException | IOException e2) {
+            LOGGER.error("Could not upload features.", e2);
         }
 
         try {
 
-            String modelURL = DatabaseFactory.getDatabase().storeComplexValue(UUID.randomUUID() + "model", new GenericFileData(zippedMetricsOutputFolder, "application/zip").getDataStream(), null, "application/zip");
+            String modelURL = DatabaseFactory.getDatabase().storeComplexValue(UUID.randomUUID() + "model", new GenericFileData(zippedModelOutputFolder, "application/zip").getDataStream(), null, "application/zip");
 
             String storeModelURL = String.format("http://140.134.48.19/ML/StoreModels.ashx?ModelID=%s&Link=%s&Format=Application/zip", modelID, modelURL);
 
@@ -381,6 +413,183 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         this.update("Finished process with id: " + processID);
 
         return outputMap;
+    }
+
+    private String extractAndUploadFeatures(File inputTiff, GeoserverWCSGeneratorCM geoserverWCSGeneratorCM, Map<String, IData> outputMap) throws IllegalAttributeException, IOException{
+
+        String host = geoserverWCSGeneratorCM.getGeoserverHost();
+        String port = geoserverWCSGeneratorCM.getGeoserverPort();
+
+        InputStream input = new FileInputStream(inputTiff);
+
+        GeotiffParser theParser = new GeotiffParser();
+
+        String[] mimetypes = theParser.getSupportedFormats();
+
+        GTRasterDataBinding theBinding = theParser.parse(input, mimetypes[0],
+                null);
+
+        Collection<Number> noDataValues = new ArrayList<>();
+        List<Range> classificationRanges = new ArrayList<>();
+
+        noDataValues.add(new Integer(1));
+
+        Range range = new Range<Integer>(new Integer(2) , true, new Integer(3), true);
+
+        classificationRanges.add(range);
+
+        SimpleFeatureCollection vectorFeatures = new PolygonExtractionProcess().execute(theBinding.getPayload(), new Integer(0), true, null, noDataValues, null, null);
+
+        String storeName = "tb14-ml" + UUID.randomUUID().toString().substring(0, 5);
+
+        File shp = getShpFile(vectorFeatures, storeName);
+
+        //zip shp file
+        String path = shp.getAbsolutePath();
+        String baseName = path.substring(0, path.length() - ".shp".length());
+        File shx = new File(baseName + ".shx");
+        File dbf = new File(baseName + ".dbf");
+        File prj = new File(baseName + ".prj");
+        File zipped =org.n52.wps.io.IOUtils.zip(shp, shx, dbf, prj);
+
+        outputMap.put(outputIDClassifiedFeatures, new GTVectorDataBinding(vectorFeatures));
+
+        try {
+            new GeoServerUploader(geoserverWCSGeneratorCM.getGeoserverUsername(), geoserverWCSGeneratorCM.getGeoserverPassword(), host, port).uploadShp(zipped, storeName);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+        String getFeatureLink = "http://"+host+":"+port+"/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&typeName="+ storeName;
+
+        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getFeatureLink;
+
+        String featureID = "";
+
+        try {
+            String storageResult = postData(storeFeaturesURL);
+
+            featureID = extractID(storageResult, "FeatureID");
+
+        } catch (IOException e1) {
+            LOGGER.error("Could not store features.", e1);
+        }
+
+        return featureID;
+
+    }
+
+    public static File getShpFile(FeatureCollection<?, ?> collection, String fileName)
+            throws IOException, IllegalAttributeException {
+        SimpleFeatureType type = null;
+        SimpleFeatureBuilder build = null;
+        FeatureIterator<?> iterator = collection.features();
+        List<SimpleFeature> featureList = new ArrayList<>();
+        Transaction transaction = new DefaultTransaction("create");
+        FeatureStore<SimpleFeatureType, SimpleFeature> store = null;
+        File shp = File.createTempFile(fileName, ".shp");
+        shp.deleteOnExit();
+        while (iterator.hasNext()) {
+            SimpleFeature sf = (SimpleFeature) iterator.next();
+            // create SimpleFeatureType
+            if (type == null) {
+                SimpleFeatureType inType = (SimpleFeatureType) collection
+                        .getSchema();
+                SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+                builder.setName(inType.getName());
+                builder.setNamespaceURI(inType.getName().getNamespaceURI());
+
+                if (collection.getSchema().getCoordinateReferenceSystem() == null) {
+                    builder.setCRS(DefaultGeographicCRS.WGS84);
+                } else {
+                    builder.setCRS(collection.getSchema()
+                            .getCoordinateReferenceSystem());
+                }
+
+                builder.setDefaultGeometry(sf.getDefaultGeometryProperty()
+                        .getName().getLocalPart());
+
+                /*
+                 * seems like the geometries must always be the first property..
+                 * @see also ShapeFileDataStore.java getSchema() method
+                 */
+                Property geomProperty = sf.getDefaultGeometryProperty();
+
+                //TODO: check if that makes any sense at all
+                if(geomProperty.getType().getBinding().getSimpleName().equals("Geometry")){
+                Geometry g = (Geometry)geomProperty.getValue();
+                if(g!=null){
+                    GeometryAttribute geo = null;
+                    if(g instanceof MultiPolygon){
+
+                    GeometryAttribute oldGeometryDescriptor = sf.getDefaultGeometryProperty();
+                    GeometryType type1 = new GeometryTypeImpl(geomProperty.getName(),MultiPolygon.class, oldGeometryDescriptor.getType().getCoordinateReferenceSystem(),oldGeometryDescriptor.getType().isIdentified(),oldGeometryDescriptor.getType().isAbstract(),oldGeometryDescriptor.getType().getRestrictions(),oldGeometryDescriptor.getType().getSuper(),oldGeometryDescriptor.getType().getDescription());
+
+                    GeometryDescriptor newGeometryDescriptor = new GeometryDescriptorImpl(type1,geomProperty.getName(),0,1,true,null);
+                    Identifier identifier = new GmlObjectIdImpl(sf.getID());
+                    geo = new GeometryAttributeImpl((Object)g,newGeometryDescriptor, identifier);
+                    sf.setDefaultGeometryProperty(geo);
+                    sf.setDefaultGeometry(g);
+                    }else{
+                        //TODO: implement other cases
+                    }
+                    if(geo != null){
+                    builder.add(geo.getName().getLocalPart(), geo
+                            .getType().getBinding());
+                    }
+                }
+                }else {
+                    builder.add(geomProperty.getName().getLocalPart(), geomProperty
+                            .getType().getBinding());
+                }
+
+                for (Property prop : sf.getProperties()) {
+
+                    if (prop.getType() instanceof GeometryType) {
+                        /*
+                         * skip, was handled before
+                         */
+                    }else {
+                        builder.add(prop.getName().getLocalPart(), prop
+                                .getType().getBinding());
+                    }
+                }
+
+                type = builder.buildFeatureType();
+
+                ShapefileDataStore dataStore = new ShapefileDataStore(shp
+                        .toURI().toURL());
+                dataStore.createSchema(type);
+                dataStore.forceSchemaCRS(type.getCoordinateReferenceSystem());
+
+                String typeName = dataStore.getTypeNames()[0];
+                store = (FeatureStore<SimpleFeatureType, SimpleFeature>) dataStore
+                        .getFeatureSource(typeName);
+
+                store.setTransaction(transaction);
+
+                build = new SimpleFeatureBuilder(type);
+            }
+            for (AttributeType attributeType : type.getTypes()) {
+                build.add(sf.getProperty(attributeType.getName()).getValue());
+            }
+
+            SimpleFeature newSf = build.buildFeature(sf.getIdentifier()
+                    .getID());
+
+            featureList.add(newSf);
+        }
+
+        try {
+            store.addFeatures(GTHelper.createSimpleFeatureCollectionFromSimpleFeatureList(featureList));
+            transaction.commit();
+            return shp;
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            transaction.rollback();
+            throw new IOException(e1.getMessage());
+        } finally {
+            transaction.close();
+        }
     }
 
     private String extractID(String s, String id) {
