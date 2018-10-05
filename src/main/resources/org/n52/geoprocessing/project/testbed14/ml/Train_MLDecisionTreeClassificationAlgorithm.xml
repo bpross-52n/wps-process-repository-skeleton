@@ -35,7 +35,11 @@
               <MimeType>application/x-geotiff</MimeType>
             </Format>
             <Format>
-              <MimeType>application/json</MimeType>
+              <MimeType>application/x-zipped-shp</MimeType>
+            </Format>
+            <Format>
+              <MimeType>application/x-zipped-shp</MimeType>
+              <Encoding>base64</Encoding>
             </Format>
           </Supported>
         </ComplexData>

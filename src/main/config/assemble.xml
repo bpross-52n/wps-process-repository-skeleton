@@ -11,7 +11,9 @@
 			<includes>
 				<include>org.n52.wps-extension:process-repository-skeleton</include>
 				<include>org.geotools:gt-process-raster</include>
+				<include>org.geotools:gt-process-feature</include>
 				<include>org.geotools:gt-process</include>
+				<include>org.geotools:gt-cql</include>
 				<include>org.jaitools:jt-vectorize</include>
 				<include>org.jaitools:jt-attributeop</include>
 				<include>org.jaitools:jt-rangelookup</include>

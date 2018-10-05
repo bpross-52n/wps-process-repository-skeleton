@@ -17,12 +17,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.media.jai.JAI;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.io.FileUtils;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
+import org.geotools.data.DataStore;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.FeatureStore;
 import org.geotools.data.Transaction;
@@ -36,7 +42,11 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.GeometryDescriptorImpl;
 import org.geotools.feature.type.GeometryTypeImpl;
 import org.geotools.filter.identity.GmlObjectIdImpl;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
+import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.process.raster.PolygonExtractionProcess;
+import org.geotools.process.vector.VectorToRasterProcess;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.jaitools.numeric.Range;
 import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
@@ -54,6 +64,7 @@ import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
 import org.n52.wps.io.data.binding.literal.LiteralAnyURIBinding;
 import org.n52.wps.io.datahandler.generator.GeoServerUploader;
 import org.n52.wps.io.datahandler.generator.GeoserverWCSGenerator;
+import org.n52.wps.io.datahandler.parser.GML32BasicParser;
 import org.n52.wps.io.datahandler.parser.GenericFileParser;
 import org.n52.wps.io.datahandler.parser.GeotiffParser;
 import org.n52.wps.io.modules.generator.GeoserverWCSGeneratorCM;
@@ -63,6 +74,7 @@ import org.n52.wps.server.ProcessDescription;
 import org.n52.wps.server.database.DatabaseFactory;
 import org.n52.wps.server.handler.DataInputInterceptors.DataInputInterceptorImplementations;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.opengis.coverage.grid.GridCoverage;
 import org.opengis.feature.GeometryAttribute;
 import org.opengis.feature.IllegalAttributeException;
 import org.opengis.feature.Property;
@@ -72,6 +84,9 @@ import org.opengis.feature.type.AttributeType;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
 import org.opengis.filter.identity.Identifier;
+import org.opengis.geometry.Envelope;
+import org.opengis.parameter.GeneralParameterValue;
+import org.opengis.parameter.ParameterValueGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,6 +194,8 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         URL trainingDataURL = null;
 
+        boolean needToConvert= false;
+
         try {
             IData trainingDataData = getSingleInputData(inputs, inputIDTrainingData);
 
@@ -188,17 +205,45 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
                 LOGGER.debug("Training data URL: " + trainingDataURL);
 
-                trainingDataData = new GenericFileParser().parse(trainingDataURL.openStream(), "image/tiff", null);
+                if(trainingDataURL.toString().contains("wfs") || trainingDataURL.toString().contains("WFS")){
+                    needToConvert = true;
+                    trainingDataData = new GenericFileParser().parse(trainingDataURL.openStream(), "application/x-zipped-shp", null);
+                }else {
+
+                    trainingDataData = new GenericFileParser().parse(trainingDataURL.openStream(), "image/tiff", null);
+                }
             }
 
-            trainingDataFile = ((GenericFileDataBinding)trainingDataData).getPayload().getBaseFile(false);
+            trainingDataFile = ((GenericFileDataBinding)trainingDataData).getPayload().getBaseFile(true);
 
-            newTrainingDataFile = new File("/tmp/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+            if(needToConvert){
 
-            try {
-                FileUtils.copyFile(trainingDataFile, newTrainingDataFile);
-            } catch (Exception e) {
-                LOGGER.info("Could not copy training data file.", e);
+              DataStore store = new ShapefileDataStore(trainingDataFile.toURI().toURL());
+              SimpleFeatureCollection features = store.getFeatureSource(
+                      store.getTypeNames()[0]).getFeatures();
+
+              GridCoverage2D raster = vectorToRaster(features);
+
+              try {
+                  newTrainingDataFile = new File("/tmp/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+
+                  GeoTiffWriter geoTiffWriter = new GeoTiffWriter(newTrainingDataFile);
+                  writeGeotiff(geoTiffWriter, raster);
+                  geoTiffWriter.dispose();
+
+                  LOGGER.info(newTrainingDataFile.getAbsolutePath());
+              } catch (IOException e) {
+                  LOGGER.error(e.getMessage());
+              }
+
+            }else {
+                newTrainingDataFile = new File("/tmp/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+
+                try {
+                    FileUtils.copyFile(trainingDataFile, newTrainingDataFile);
+                } catch (Exception e) {
+                    LOGGER.info("Could not copy training data file.", e);
+                }
             }
 
             LOGGER.debug("Training data file exists: " + newTrainingDataFile.exists());
@@ -413,6 +458,49 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         this.update("Finished process with id: " + processID);
 
         return outputMap;
+    }
+
+    private GridCoverage2D vectorToRaster(FeatureCollection<?, ?> featureCollection) {
+        Integer rasterWidth = 250;
+        Integer rasterHeight = 331;
+        String title = "trainingdata";
+        String attribute = "value";
+        Envelope bounds;
+        GridCoverage2D raster = new VectorToRasterProcess().execute((SimpleFeatureCollection) featureCollection, rasterWidth, rasterHeight, title, attribute, null, null);
+
+        return raster;
+    }
+
+    private void writeGeotiff(GeoTiffWriter geoTiffWriter, GridCoverage coverage){
+        GeoTiffFormat format = new GeoTiffFormat();
+
+        GeoTiffWriteParams wp = new GeoTiffWriteParams();
+
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("LZW");
+        wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+        int width = ((GridCoverage2D) coverage).getRenderedImage().getWidth();
+        int tileWidth = 1024;
+        if(width<2048){
+            tileWidth = new Double(Math.sqrt(width)).intValue();
+        }
+        wp.setTiling(tileWidth, tileWidth);
+        ParameterValueGroup paramWrite = format.getWriteParameters();
+        paramWrite.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+        JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256*1024*1024);
+
+        try {
+            geoTiffWriter.write(coverage, (GeneralParameterValue[])paramWrite.values().toArray(new
+                    GeneralParameterValue[1]));
+        } catch (IllegalArgumentException e1) {
+            LOGGER.error(e1.getMessage(), e1);
+            throw new RuntimeException(e1);
+        } catch (IndexOutOfBoundsException e1) {
+            LOGGER.error(e1.getMessage(), e1);
+            throw new RuntimeException(e1);
+        } catch (IOException e1) {LOGGER.error(e1.getMessage(), e1);
+            throw new RuntimeException(e1);
+        }
     }
 
     private String extractAndUploadFeatures(File inputTiff, GeoserverWCSGeneratorCM geoserverWCSGeneratorCM, Map<String, IData> outputMap) throws IllegalAttributeException, IOException{
