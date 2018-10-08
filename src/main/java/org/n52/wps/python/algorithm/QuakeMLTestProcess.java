@@ -47,54 +47,6 @@ public class QuakeMLTestProcess extends AbstractAlgorithm {
         Map<String, IData> result = new HashMap<>();
 
         result.put(outputID, input);
-//
-//        List<? extends OutputDefinitionType> outputDefinitionTypes100 = ExecutionContextFactory.getContext().getOutputs().getWps100OutputDefinitionTypes();
-//        List<? extends net.opengis.wps.x20.OutputDefinitionType> outputDefinitionTypes200 = ExecutionContextFactory.getContext().getOutputs().getWps200OutputDefinitionTypes();
-//
-//        String mimeType = "";
-//
-//        if((outputDefinitionTypes100 != null) && !outputDefinitionTypes100.isEmpty()){
-//            mimeType = outputDefinitionTypes100.get(0).getMimeType();
-//        } else {
-//            mimeType = outputDefinitionTypes200.get(0).getMimeType();
-//        }
-//
-//        File quakeMLFile = new File("d:/tmp/quakeml.xml");
-//
-//        if (mimeType.equals(mimeTypeGeoJSON)) {
-//            QuakeMLDataBinding quakeMlBinding;
-//            try {
-//                quakeMlBinding = new QuakeMLParser().parse(new FileInputStream(quakeMLFile), "text/xml", null);
-//
-//                FeatureCollection<?,?> featureCollection = quakeMlBinding.getPayload();
-//
-//                GeoJSONGenerator geoJSONGenerator = new GeoJSONGenerator();
-//
-//                InputStream in =
-//                        geoJSONGenerator.generateStream(new GTVectorDataBinding(featureCollection), mimeType, null);
-//
-//                File jsonFile = File.createTempFile("event", ".json");
-//
-//                FileOutputStream out = new FileOutputStream(jsonFile);
-//
-//                IOUtils.copy(in, out);
-//
-//                result.put(outputID, new GenericFileDataBinding(new GenericFileData(jsonFile, mimeType)));
-//
-//            } catch (FileNotFoundException e) {
-//                LOGGER.error(e.getMessage());
-//            } catch (IOException e) {
-//                // TODO Auto-generated catch block
-//                LOGGER.error("");
-//            }
-//        } else {
-//            try {
-//
-//            } catch (IOException e) {
-//                // TODO Auto-generated catch block
-//                LOGGER.error("");
-//            }
-//        }
 
         return result;
     }
@@ -106,12 +58,12 @@ public class QuakeMLTestProcess extends AbstractAlgorithm {
 
     @Override
     public Class<?> getInputDataType(String id) {
-        return GenericFileDataBinding.class;
+        return QuakeMLDataBinding.class;
     }
 
     @Override
     public Class<?> getOutputDataType(String id) {
-        return GenericFileDataBinding.class;
+        return QuakeMLDataBinding.class;
     }
 
 }

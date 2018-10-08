@@ -17,6 +17,7 @@ import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.commons.context.ExecutionContextFactory;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.python.data.quakeml.QuakeMLDataBinding;
 import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
@@ -99,7 +100,7 @@ public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
         workspacePath = repositoryCM.getWorkspacePath() + "quakeledger/";
     }
 
-    @ComplexDataOutput(identifier = "selected-rows", binding = GenericFileDataBinding.class)
+    @ComplexDataOutput(identifier = "selected-rows", binding = QuakeMLDataBinding.class)
     public GenericFileData getResult() {
         return selectedRows;
     }

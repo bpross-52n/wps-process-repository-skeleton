@@ -96,7 +96,7 @@ public class QuakeMLParser extends AbstractParser {
 
     public QuakeMLParser() {
         super();
-        supportedIDataTypes.add(GenericFileDataBinding.class);
+        supportedIDataTypes.add(QuakeMLDataBinding.class);
     }
 
     public IData parse(InputStream stream, String mimeType, String schema) {
@@ -104,7 +104,7 @@ public class QuakeMLParser extends AbstractParser {
         if(mimeType.equals(QuakeMLGenerator.mimeTypeQuakeML)){
             GenericFileData theData = new GenericFileData(stream, mimeType);
 
-            return new GenericFileDataBinding(theData);
+            return new QuakeMLDataBinding(theData);
         }
 
         GeoJSONParser geoJSONParser = new GeoJSONParser();
@@ -125,7 +125,7 @@ public class QuakeMLParser extends AbstractParser {
 
               GenericFileData theData = new GenericFileData(quakeMLFile, mimeType);
 
-              return new GenericFileDataBinding(theData);
+              return new QuakeMLDataBinding(theData);
 
             } catch (IOException e) {
                 // TODO Auto-generated catch block

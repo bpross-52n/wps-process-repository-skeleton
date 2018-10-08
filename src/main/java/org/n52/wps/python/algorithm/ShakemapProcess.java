@@ -3,6 +3,7 @@ package org.n52.wps.python.algorithm;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
@@ -17,6 +18,7 @@ import org.n52.wps.commons.WPSConfig;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.python.data.quakeml.QuakeMLDataBinding;
 import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
@@ -55,7 +57,7 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
 
             List<IData> quakeMLInputList = inputData.get("quakeml-input");
 
-            File quakeMLFile = ((GenericFileDataBinding)quakeMLInputList.get(0)).getPayload().getBaseFile(false);
+            File quakeMLFile = ((QuakeMLDataBinding)quakeMLInputList.get(0)).getPayload().getBaseFile(false);
 
             File newQuakeMLFile = File.createTempFile("quakeml", ".xml");
 
@@ -68,6 +70,8 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
             while((line = bufferedReader.readLine()) != null){
                 if(line.contains("<?xml version='1.0' encoding='UTF-8'?>")){
                     line = line.replace("<?xml version='1.0' encoding='UTF-8'?>", "");
+                }if(line.contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")){
+                    line = line.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "");
                 }
                 bufferedWriter.write(line);
             }
@@ -91,9 +95,11 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
 
             PipedInputStream pipedIn = new PipedInputStream(pipedOut);
 
+            FileOutputStream fileOutputStream = new FileOutputStream(new File("/tmp/log" + System.currentTimeMillis() + ".log"));
+
             // attach error stream reader
             JavaProcessStreamReader errorStreamReader =
-                    new JavaProcessStreamReader(proc.getErrorStream(), "ERROR", System.err);
+                    new JavaProcessStreamReader(proc.getErrorStream(), "ERROR", fileOutputStream);
 
             // attach output stream reader
             JavaProcessStreamReader outputStreamReader = new JavaProcessStreamReader(proc.getInputStream(), "OUTPUT", pipedOut);
@@ -145,7 +151,7 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
 
     @Override
     public Class<?> getInputDataType(String id) {
-        return GenericFileDataBinding.class;
+        return QuakeMLDataBinding.class;
     }
 
     @Override

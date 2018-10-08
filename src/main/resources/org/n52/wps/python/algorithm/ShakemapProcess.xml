@@ -20,6 +20,9 @@
 					</Default>
 					<Supported>
 						<Format>
+							<MimeType>application/vnd.geo+json</MimeType>
+						</Format>
+						<Format>
 							<MimeType>text/xml</MimeType>
 							<Schema>http://quakeml.org/xmlns/quakeml/1.2/QuakeML-1.2.xsd</Schema>
 						</Format>

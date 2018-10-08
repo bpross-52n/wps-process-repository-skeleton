@@ -47,7 +47,7 @@ public class QuakeMLGenerator extends AbstractGenerator {
 
     public QuakeMLGenerator() {
         super();
-        supportedIDataTypes.add(GenericFileDataBinding.class);
+        supportedIDataTypes.add(QuakeMLDataBinding.class);
     }
 
     @Override
@@ -57,12 +57,12 @@ public class QuakeMLGenerator extends AbstractGenerator {
 
         if(mimeType.equals(QuakeMLGenerator.mimeTypeGeoJSON)){
 
-            SimpleFeatureCollection featureCollection = new QuakeMLParser().parseQuakeMLToFeatureCollection(((GenericFileDataBinding)data).getPayload().getDataStream());
+            SimpleFeatureCollection featureCollection = new QuakeMLParser().parseQuakeMLToFeatureCollection(((QuakeMLDataBinding)data).getPayload().getDataStream());
 
             return new GeoJSONGenerator().generateStream(new GTVectorDataBinding(featureCollection), mimeTypeGeoJSON, null);
 
         } else {
-            return ((GenericFileDataBinding)data).getPayload().getDataStream();
+            return ((QuakeMLDataBinding)data).getPayload().getDataStream();
         }
     }
 
@@ -97,12 +97,10 @@ public class QuakeMLGenerator extends AbstractGenerator {
                     } else {
                         switch (prop.getName().toString()) {
                             case "the_geom":
-                                // latitude:
-                                Point p = (Point) prop.getValue();
-                                Coordinate c = p.getCoordinate();
-                                createElement(doc, event, "origin.latitude.value", c.y + "");
-                                // longitude:
-                                createElement(doc, event, "origin.longitude.value", c.y + "");
+                                createLatLon((Point) prop.getValue(), doc, event);
+                                break;
+                            case "geometry":
+                                createLatLon((Point) prop.getValue(), doc, event);
                                 break;
                             case "preferredOriginID":
                                 Element preferredOriginID = doc.createElement("preferredOriginID");
@@ -267,6 +265,14 @@ public class QuakeMLGenerator extends AbstractGenerator {
             LOGGER.error("Could not generate Inputstream. Returning null. " + e);
             return null;
         }
+    }
+
+    private void createLatLon(Point p, Document doc, Element event) {
+        Coordinate c = p.getCoordinate();
+        // latitude:
+        createElement(doc, event, "origin.latitude.value", c.y + "");
+        // longitude:
+        createElement(doc, event, "origin.longitude.value", c.y + "");
     }
 
     private void createAttribut(Document doc, Element event, String id, String value) {

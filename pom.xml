@@ -330,17 +330,17 @@
 			<version>${xmlbeans.version}</version>
 			<scope>provided</scope>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>org.n52.wps.riesgos</groupId> -->
-<!-- 			<artifactId>shakemap-process-repository</artifactId> -->
-<!-- 			<version>1-SNAPSHOT</version> -->
-<!-- 			<scope>runtime</scope> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency>	 -->
-<!-- 		    <groupId>org.n52.wps</groupId> -->
-<!-- 	        <artifactId>shakemap-xmlbeans</artifactId> -->
-<!-- 			<version>1.0.0-SNAPSHOT</version> -->
-<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.n52.wps.riesgos</groupId>
+			<artifactId>shakemap-process-repository</artifactId>
+			<version>1-SNAPSHOT</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>	
+		    <groupId>org.n52.wps</groupId>
+	        <artifactId>shakemap-xmlbeans</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-opengis</artifactId>
@@ -350,7 +350,7 @@
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-geotiff</artifactId>
 			<version>13.5</version>
-			<scope>runtime</scope>
+<!-- 			<scope>runtime</scope> -->
 		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -362,7 +362,7 @@
 			        <groupId>com.vividsolutions</groupId>
 			    </exclusion>
 			</exclusions>
-			<scope>runtime</scope>
+<!-- 			<scope>runtime</scope> -->
 		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -373,7 +373,7 @@
 			<groupId>javax.media</groupId>
 			<artifactId>jai_core</artifactId>
 			<version>1.1.3</version>
-			<scope>runtime</scope>
+<!-- 			<scope>runtime</scope> -->
 		</dependency>
 		<dependency>
 			<groupId>com.vividsolutions</groupId>

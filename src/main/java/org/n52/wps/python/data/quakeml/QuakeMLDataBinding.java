@@ -1,6 +1,6 @@
 package org.n52.wps.python.data.quakeml;
 
-import org.geotools.feature.FeatureCollection;
+import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IComplexData;
 
 public class QuakeMLDataBinding implements IComplexData {
@@ -10,23 +10,20 @@ public class QuakeMLDataBinding implements IComplexData {
      */
     private static final long serialVersionUID = 5635195859106892797L;
 
-    private FeatureCollection featureCollection;
+    protected GenericFileData payload;
 
-    public QuakeMLDataBinding(FeatureCollection featureCollection) {
-        this.featureCollection = featureCollection;
+    public QuakeMLDataBinding(GenericFileData fileData){
+        this.payload = fileData;
+    }
+
+    public GenericFileData getPayload() {
+        return payload;
+    }
+
+    public Class<GenericFileData> getSupportedClass() {
+        return GenericFileData.class;
     }
 
     @Override
-    public FeatureCollection getPayload() {
-        return featureCollection;
-    }
-
-    @Override
-    public Class<FeatureCollection> getSupportedClass() {
-        return FeatureCollection.class;
-    }
-
-    @Override
-    public void dispose() {}
-
+    public void dispose(){}
 }
