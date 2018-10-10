@@ -93,8 +93,6 @@ public class ShakemapConverter {
 
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
 
-//        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(new File("d:/tmp/values.txt")));
-
         String line = "";
 
         while((line = bufferedReader.readLine()) != null){
@@ -138,14 +136,12 @@ public class ShakemapConverter {
             double u = Math.ceil(a * lon + b);
             double v = Math.ceil(c * lat + d);
 
-//            bufferedWriter.write(u + " " + v + " " + pga + "\n");
-//            bufferedWriter.write((a * lon + b) + " " + (c * lat + d) + " " + pga + "\n");
-//            bufferedWriter.write("\n");
-
-            raster.setSample((int)u, (int)v, 0, getIntensity(pga));
+            if(!(u > width) || (v > height) ){
+                raster.setSample((int)u, (int)v, 0, getIntensity(pga));
+            }else{
+                LOGGER.warn("Image coordinates out of bounds: u: " + u + " v: " + v + " width: " + width + " height: " + height);
+            }
         }
-
-//        bufferedWriter.close();
     }
 
     //see https://usgs.github.io/shakemap/manual3_5/tg_intensity.html
@@ -154,23 +150,25 @@ public class ShakemapConverter {
         int intensity = 0;
 
         if(pga < 0.05){
+            intensity = 0;
+        } else if((0.05 <= pga) && (pga < 0.3)){
             intensity = 1;
         } else if((0.3 <= pga) && (pga < 2.8)){
             intensity = 2;
         } else if((2.8 <= pga) && (pga < 6.2)){
-            intensity = 4;
+            intensity = 3;
         } else if((6.2 <= pga) && (pga < 12)){
-            intensity = 5;
+            intensity = 4;
         } else if((12 <= pga) && (pga < 22)){
-            intensity = 6;
+            intensity = 5;
         } else if((22 <= pga) && (pga < 40)){
-            intensity = 7;
+            intensity = 6;
         } else if((40 <= pga) && (pga < 75)){
-            intensity = 8;
+            intensity = 7;
         } else if((75 <= pga) && (pga < 139)){
-            intensity = 9;
+            intensity = 8;
         } else if(pga > 139){
-            intensity = 10;
+            intensity = 9;
         }
 
         return intensity;

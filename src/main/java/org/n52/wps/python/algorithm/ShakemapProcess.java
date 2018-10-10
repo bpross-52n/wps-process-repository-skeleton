@@ -1,11 +1,15 @@
 package org.n52.wps.python.algorithm;
 
+import java.awt.image.DataBuffer;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -13,20 +17,38 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import javax.media.jai.RasterFactory;
+
+import org.geotools.coverage.CoverageFactoryFinder;
+import org.geotools.coverage.grid.GridCoverageFactory;
+import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
 import org.n52.wps.commons.WPSConfig;
-import org.n52.wps.io.data.GenericFileData;
+import org.n52.wps.commons.context.ExecutionContextFactory;
+import org.n52.wps.commons.context.OutputTypeWrapper;
+import org.n52.wps.io.data.GenericFileDataWithGT;
 import org.n52.wps.io.data.IData;
-import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.io.data.binding.complex.GenericFileDataWithGTBinding;
 import org.n52.wps.python.data.quakeml.QuakeMLDataBinding;
 import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
+import org.n52.wps.python.util.ShakemapConverter;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.webapp.api.ConfigurationCategory;
+import org.opengis.coverage.grid.GridCoverage;
+import org.opengis.geometry.Envelope;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import gov.usgs.earthquake.eqcenter.shakemap.GridSpecificationType;
+import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument;
+import gov.usgs.earthquake.eqcenter.shakemap.ShakemapGridDocument.ShakemapGrid;
 
 public class ShakemapProcess extends AbstractObservableAlgorithm {
 
@@ -134,7 +156,69 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
 
             Map<String, IData> result = new HashMap<>();
 
-            result.put("shakemap-output", new GenericFileDataBinding(new GenericFileData(outputShakemap, "text/xml")));
+            GenericFileDataWithGT genericFileDataWithGT = null;
+
+            String mimeType = "";
+
+            OutputTypeWrapper outputs = ExecutionContextFactory.getContext().getOutputs();
+
+            if (outputs.isWPS100Execution()) {
+                mimeType = outputs.getWps100OutputDefinitionTypes().get(0).getMimeType();
+            } else {
+                mimeType = outputs.getWps200OutputDefinitionTypes().get(0).getMimeType();
+            }
+
+            if (mimeType.equals("text/xml")) {
+                genericFileDataWithGT = new GenericFileDataWithGT(outputShakemap, mimeType);
+            } else if(mimeType.equals("application/WMS") || mimeType.contains("tif")){
+                ShakemapGridDocument shakemapGridDocument = ShakemapGridDocument.Factory.parse(outputShakemap);
+
+                ShakemapGrid shakemapGrid = shakemapGridDocument.getShakemapGrid();
+
+                ShakemapConverter shakemapConverter = new ShakemapConverter(shakemapGrid);
+
+                GridSpecificationType gridSpecification = shakemapGrid.getGridSpecification();
+
+                final int width = Integer.parseInt(gridSpecification.getNlon());
+                final int height = Integer.parseInt(gridSpecification.getNlat());
+
+                double minx = Double.parseDouble(gridSpecification.getLonMin());
+                double miny = Double.parseDouble(gridSpecification.getLatMin());
+                double maxx = Double.parseDouble(gridSpecification.getLonMax());
+                double maxy = Double.parseDouble(gridSpecification.getLatMax());
+                //
+                String gridData = shakemapGrid.getGridData();
+
+                WritableRaster raster =
+                        RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, width + 1, height + 1, 1, null);
+
+                ByteArrayInputStream in = new ByteArrayInputStream(gridData.getBytes());
+
+                shakemapConverter.convertGridToRaster(raster, in);
+
+                CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
+                Envelope envelope = new ReferencedEnvelope(minx, maxx, miny, maxy, crs);
+
+                GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
+                GridCoverage gc = factory.create("Shakemap", raster, envelope);
+
+                GeoTiffWriter geoTiffWriter = null;
+                String tmpDirPath = System.getProperty("java.io.tmpdir");
+                String fileName = tmpDirPath + File.separatorChar + "temp" + UUID.randomUUID() + ".tif";
+                File outputTiff = new File(fileName);
+                try {
+                    geoTiffWriter = new GeoTiffWriter(outputTiff);
+                    shakemapConverter.writeGeotiff(geoTiffWriter, gc);
+                    geoTiffWriter.dispose();
+                    genericFileDataWithGT = new GenericFileDataWithGT(outputTiff, "image/tiff");
+                } catch (IOException e) {
+                    // LOGGER.error(e.getMessage());
+                    throw new IOException("Could not create output due to an IO error");
+                }
+            }
+//            genericFileDataWithGT = new GenericFileDataWithGT(outputShakemap, "text/xml");
+
+            result.put("shakemap-output", new GenericFileDataWithGTBinding(genericFileDataWithGT));
 
             return result;
 
@@ -156,7 +240,7 @@ public class ShakemapProcess extends AbstractObservableAlgorithm {
 
     @Override
     public Class<?> getOutputDataType(String id) {
-        return GenericFileDataBinding.class;
+        return GenericFileDataWithGTBinding.class;
     }
 
 }

@@ -47,6 +47,9 @@
 							<MimeType>text/xml</MimeType>
 							<Schema>http://earthquake.usgs.gov/eqcenter/shakemap/xml/schemas/shakemap.xsd</Schema>
 						</Format>
+						<Format>
+							<MimeType>application/WMS</MimeType>
+						</Format>
 					</Supported>
 				</ComplexOutput>
 			</Output>

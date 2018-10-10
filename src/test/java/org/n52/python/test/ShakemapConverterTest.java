@@ -24,6 +24,7 @@ import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
 import org.n52.wps.project.riesgos.shakemap.io.ShakemapParser;
@@ -32,6 +33,8 @@ import org.opengis.coverage.grid.GridCoverage;
 import org.opengis.geometry.Envelope;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +54,7 @@ public class ShakemapConverterTest {
     private final String pgaFieldName = "PGA";
 
     @Test
-    public void testConvertShakemap() throws XmlException, IOException{
+    public void testConvertShakemap() throws XmlException, IOException, NoSuchAuthorityCodeException, FactoryException{
 
         //read grid
 
@@ -174,7 +177,8 @@ public class ShakemapConverterTest {
 //            }
 //        }
 
-        CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
+//        CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
 //        Envelope envelope = new Envelope2D(crs, 0, 0, width, height);
         Envelope envelope = new ReferencedEnvelope(minx, maxx, miny, maxy, crs);
 

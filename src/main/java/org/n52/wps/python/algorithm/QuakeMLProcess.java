@@ -7,29 +7,31 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.n52.wps.algorithm.annotation.Algorithm;
 import org.n52.wps.algorithm.annotation.ComplexDataOutput;
 import org.n52.wps.algorithm.annotation.Execute;
 import org.n52.wps.algorithm.annotation.LiteralDataInput;
 import org.n52.wps.commons.WPSConfig;
-import org.n52.wps.commons.context.ExecutionContextFactory;
 import org.n52.wps.io.data.GenericFileData;
-import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
+import org.n52.wps.io.data.IData;
+import org.n52.wps.io.data.binding.literal.LiteralDoubleBinding;
+import org.n52.wps.io.data.binding.literal.LiteralStringBinding;
 import org.n52.wps.python.data.quakeml.QuakeMLDataBinding;
 import org.n52.wps.python.repository.PythonAlgorithmRepository;
 import org.n52.wps.python.repository.modules.PythonAlgorithmRepositoryCM;
 import org.n52.wps.python.util.JavaProcessStreamReader;
-import org.n52.wps.server.AbstractAnnotatedAlgorithm;
+import org.n52.wps.server.AbstractAlgorithm;
 import org.n52.wps.server.ExceptionReport;
 import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Algorithm(
-        version = "1.0.0")
-public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
+//@Algorithm(
+//        version = "1.0.0")
+public class QuakeMLProcess extends AbstractAlgorithm {
 
     private static Logger LOGGER = LoggerFactory.getLogger(QuakeMLProcess.class);
 
@@ -175,10 +177,73 @@ public class QuakeMLProcess extends AbstractAnnotatedAlgorithm {
 
         String pythonScriptName = "eventquery.py";
 
-        // just need to execute the task manager
-//        Process proc = rt.exec("cmd.exe /c start");
         return "python3 " + workspacePath + File.separatorChar + pythonScriptName + " " + lonmin + " " + lonmax + " " + latmin + " " + latmax + " " + mmin + " " + mmax
                 + " " + zmin + " " + zmax + " " + p + " " + etype + " " + tlon + " " + tlat;
+    }
+
+    private void setInputs(Map<String, List<IData>> inputData) {
+        lonmin = getInput(inputData, "lonmin");
+        lonmax = getInput(inputData, "lonmax");
+        latmin = getInput(inputData, "latmin");
+        latmax = getInput(inputData, "latmax");
+        mmin = getInput(inputData, "mmin");
+        mmax = getInput(inputData, "mmax");
+        zmin = getInput(inputData, "zmin");
+        zmax = getInput(inputData, "zmax");
+        p = getInput(inputData, "p");
+        etype = getInputString(inputData, "etype");
+        tlon = getInput(inputData, "tlon");
+        tlat = getInput(inputData, "tlat");
+    }
+
+    private String getInputString(Map<String, List<IData>> inputData,
+            String inputID) {
+        List<IData> dataList = inputData.get(inputID);
+
+        IData data = dataList.get(0);
+
+        if(data instanceof LiteralStringBinding){
+            return ((LiteralStringBinding)data).getPayload();
+        }
+
+        throw new IllegalArgumentException("Could not get input: " + inputID);
+    }
+
+    private Double getInput(Map<String, List<IData>> inputData, String inputID){
+
+        List<IData> dataList = inputData.get(inputID);
+
+        IData data = dataList.get(0);
+
+        if(data instanceof LiteralDoubleBinding){
+            return ((LiteralDoubleBinding)data).getPayload();
+        }
+
+        throw new IllegalArgumentException("Could not get input: " + inputID);
+    }
+
+    @Override
+    public Map<String, IData> run(Map<String, List<IData>> inputData) throws ExceptionReport {
+
+        setInputs(inputData);
+
+        runScript();
+
+        Map<String, IData> result = new HashMap<>();
+
+        result.put("selected-rows", new QuakeMLDataBinding(selectedRows));
+
+        return result;
+    }
+
+    @Override
+    public Class<?> getInputDataType(String id) {
+        return LiteralDoubleBinding.class;
+    }
+
+    @Override
+    public Class<?> getOutputDataType(String id) {
+        return QuakeMLDataBinding.class;
     }
 
 }
