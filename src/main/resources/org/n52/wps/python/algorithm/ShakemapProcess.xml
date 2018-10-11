@@ -50,6 +50,13 @@
 						<Format>
 							<MimeType>application/WMS</MimeType>
 						</Format>
+						<Format>
+							<MimeType>image/tiff</MimeType>
+						</Format>
+						<Format>
+							<MimeType>image/tiff</MimeType>
+							<Encoding>base64</Encoding>
+						</Format>
 					</Supported>
 				</ComplexOutput>
 			</Output>

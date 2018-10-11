@@ -136,7 +136,7 @@ public class ShakemapConverter {
             double u = Math.ceil(a * lon + b);
             double v = Math.ceil(c * lat + d);
 
-            if(!(u > width) || (v > height) ){
+            if(!((u > width) || (v > height))){
                 raster.setSample((int)u, (int)v, 0, getIntensity(pga));
             }else{
                 LOGGER.warn("Image coordinates out of bounds: u: " + u + " v: " + v + " width: " + width + " height: " + height);

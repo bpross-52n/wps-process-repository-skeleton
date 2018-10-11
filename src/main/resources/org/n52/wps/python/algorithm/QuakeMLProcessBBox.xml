@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd" xml:lang="en-US" service="WPS" version="1.0.0">
+  <ProcessDescription statusSupported="true" storeSupported="true" wps:processVersion="1.0.0">
+    <ows:Identifier>org.n52.wps.python.algorithm.QuakeMLProcessBBox</ows:Identifier>
+    <ows:Title>QuakeMLProcess for BoundingBox input</ows:Title>
+    <DataInputs>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>input-boundingbox</ows:Identifier>
+        <ows:Title>input-boundingbox</ows:Title>
+        <BoundingBoxData>
+          <Default>
+            <CRS>EPSG:4326</CRS>
+          </Default>
+          <Supported>
+            <CRS>EPSG:4328</CRS>
+          </Supported>
+        </BoundingBoxData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>mmin</ows:Identifier>
+        <ows:Title>mmin</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>6.6</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>mmax</ows:Identifier>
+        <ows:Title>mmax</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>8.5</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>zmin</ows:Identifier>
+        <ows:Title>zmin</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>5</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>zmax</ows:Identifier>
+        <ows:Title>zmax</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>140</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>p</ows:Identifier>
+        <ows:Title>p</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>0.1</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>etype</ows:Identifier>
+        <ows:Title>etype</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:string"/>
+          <ows:AllowedValues>
+            <ows:Value>observed</ows:Value>
+            <ows:Value>deaggregation</ows:Value>
+            <ows:Value>stochastic</ows:Value>
+            <ows:Value>expert</ows:Value>
+          </ows:AllowedValues>
+          <DefaultValue>deaggregation</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>tlon</ows:Identifier>
+        <ows:Title>tlon</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>-71.5730623712764</DefaultValue>
+        </LiteralData>
+      </Input>
+      <Input minOccurs="1" maxOccurs="1">
+        <ows:Identifier>tlat</ows:Identifier>
+        <ows:Title>tlat</ows:Title>
+        <LiteralData>
+          <ows:DataType ows:reference="xs:double"/>
+          <ows:AnyValue/>
+          <DefaultValue>-33.1299174879672</DefaultValue>
+        </LiteralData>
+      </Input>
+    </DataInputs>
+    <ProcessOutputs>
+      <Output>
+        <ows:Identifier>selected-rows</ows:Identifier>
+        <ows:Title>selected-rows</ows:Title>
+        <ComplexOutput>
+          <Default>
+            <Format>
+              <MimeType>text/xml</MimeType>
+              <Schema>http://quakeml.org/xmlns/quakeml/1.2/QuakeML-1.2.xsd</Schema>
+            </Format>
+          </Default>
+          <Supported>
+            <Format>
+              <MimeType>application/vnd.geo+json</MimeType>
+            </Format>
+            <Format>
+              <MimeType>text/xml</MimeType>
+              <Schema>http://quakeml.org/xmlns/quakeml/1.2/QuakeML-1.2.xsd</Schema>
+            </Format>
+          </Supported>
+        </ComplexOutput>
+      </Output>
+    </ProcessOutputs>
+  </ProcessDescription>
+</wps:ProcessDescriptions>

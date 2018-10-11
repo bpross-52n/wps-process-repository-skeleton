@@ -272,7 +272,7 @@ public class QuakeMLGenerator extends AbstractGenerator {
         // latitude:
         createElement(doc, event, "origin.latitude.value", c.y + "");
         // longitude:
-        createElement(doc, event, "origin.longitude.value", c.y + "");
+        createElement(doc, event, "origin.longitude.value", c.x + "");
     }
 
     private void createAttribut(Document doc, Element event, String id, String value) {
