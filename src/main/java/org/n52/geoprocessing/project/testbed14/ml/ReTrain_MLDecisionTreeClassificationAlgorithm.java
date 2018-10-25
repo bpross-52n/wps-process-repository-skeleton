@@ -1,8 +1,10 @@
 package org.n52.geoprocessing.project.testbed14.ml;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,12 +12,19 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.media.jai.JAI;
 import javax.xml.namespace.QName;
@@ -105,10 +114,10 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
 @DataInputInterceptorImplementations(value="org.n52.wps.server.handler.PassToAlgorithmInputInterceptors")
-public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObservableAlgorithm {
+public class ReTrain_MLDecisionTreeClassificationAlgorithm extends AbstractObservableAlgorithm {
 
     private static Logger LOGGER = LoggerFactory
-            .getLogger(Train_MLDecisionTreeClassificationAlgorithm.class);
+            .getLogger(ReTrain_MLDecisionTreeClassificationAlgorithm.class);
 
     private final String fileSeparator = System.getProperty("file.separator");
     private final String lineSeparator = System.getProperty("line.separator");
@@ -119,19 +128,19 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private final String inputIDSourceData = "source-data";
     private final String inputIDTrainingData = "training-data";
     private final String inputIDInitialModelParameters = "initial-model-parameters";
-    private String outputIDModel = "model";
+    private final String inputIDModel = "input-model";
+    private String outputIDModel = "re-trained-model";
     private String outputIDClassifiedImage = "classified-image";
     private String outputIDClassifiedFeatures = "classified-features";
     private String outputIDModelQuality = "model-quality";
-    private String outputDir;
     private String jarPath;
 
     private String modelPath;
 
-    public Train_MLDecisionTreeClassificationAlgorithm(){
+    public ReTrain_MLDecisionTreeClassificationAlgorithm(){
     }
 
-    public Train_MLDecisionTreeClassificationAlgorithm(String processID) {
+    public ReTrain_MLDecisionTreeClassificationAlgorithm(String processID) {
         super();
         this.processID = processID;
     }
@@ -150,6 +159,9 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
             return GenericFileDataBinding.class;
         }
         if(id.equals(inputIDInitialModelParameters)){
+            return GenericFileDataBinding.class;
+        }
+        if (id.equals(inputIDModel)) {
             return GenericFileDataBinding.class;
         }
         return GenericFileDataBinding.class;
@@ -201,6 +213,8 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         File initialModelParametersFile = null;
 
+        File modelParametersFile = null;
+
         URL trainingDataURL = null;
 
         boolean needToConvert= false;
@@ -225,6 +239,24 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
                     trainingDataData = new GenericFileParser().parse(trainingDataURL.openStream(), "image/tiff", null);
                 }
+            }
+
+            try {
+                IData modelParametersData = getSingleInputData(inputs, inputIDModel);
+
+                modelParametersFile = ((GenericFileDataBinding) modelParametersData).getPayload().getBaseFile(false);
+            } catch (Exception e1) {
+                LOGGER.info("Did not get optional input: " + inputIDModel);
+            }
+
+            if(modelParametersFile != null){
+
+                String unzippedModelPath = System.getProperty("java.io.tmpdir") + fileSeparator + UUID.randomUUID().toString().substring(0, 5) + fileSeparator;
+
+                unzipFolder(unzippedModelPath, modelParametersFile.getAbsolutePath());
+            } else {
+                //use latest model
+
             }
 
             if(needToConvert){
@@ -481,6 +513,42 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         this.update("Finished process with id: " + processID);
 
         return outputMap;
+    }
+
+    private void unzipFolder(String outputFolderPath,
+            String fileName) {
+
+        try (ZipFile file = new ZipFile(fileName)) {
+            FileSystem fileSystem = FileSystems.getDefault();
+
+            Enumeration<? extends ZipEntry> entries = file.entries();
+
+            String uncompressedDirectory = outputFolderPath;
+            Files.createDirectory(fileSystem.getPath(uncompressedDirectory));
+
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+
+                if (entry.isDirectory()) {
+                    LOGGER.trace("Creating Directory:" + uncompressedDirectory + entry.getName());
+                    Files.createDirectories(fileSystem.getPath(uncompressedDirectory + entry.getName()));
+                } else {
+                    InputStream is = file.getInputStream(entry);
+                    BufferedInputStream bis = new BufferedInputStream(is);
+                    String uncompressedFileName = uncompressedDirectory + entry.getName();
+                    Path uncompressedFilePath = fileSystem.getPath(uncompressedFileName);
+                    Files.createFile(uncompressedFilePath);
+                    FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName);
+                    while (bis.available() > 0) {
+                        fileOutput.write(bis.read());
+                    }
+                    fileOutput.close();
+                    LOGGER.trace("Written :" + entry.getName());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Could not unzip folder.", e);
+        }
     }
 
     private IData parseGML(InputStream openStream) {
@@ -873,7 +941,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     public ProcessDescription getDescription() {
 
         try {
-            InputStream in = getClass().getResourceAsStream("Train_MLDecisionTreeClassificationAlgorithm.xml");
+            InputStream in = getClass().getResourceAsStream("ReTrain_MLDecisionTreeClassificationAlgorithm.xml");
 
             ProcessDescriptionsDocument processDescriptionsDocument = ProcessDescriptionsDocument.Factory.parse(in);
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd" xml:lang="en-US" service="WPS" version="1.0.0">
   <ProcessDescription statusSupported="true" storeSupported="true" wps:processVersion="1.0.0">
-    <ows:Identifier>org.n52.geoprocessing.project.testbed14.ml.Train_MLDecisionTreeClassificationAlgorithm</ows:Identifier>
-    <ows:Title>Train_MLDecisionTreeClassificationAlgorithm</ows:Title>
-    <ows:Abstract>Train decision tree classification based on Apache Spark</ows:Abstract>
+    <ows:Identifier>org.n52.geoprocessing.project.testbed14.ml.ReTrain_MLDecisionTreeClassificationAlgorithm</ows:Identifier>
+    <ows:Title>Re-rain_MLDecisionTreeClassificationAlgorithm</ows:Title>
+    <ows:Abstract>Re-train decision tree classification based on Apache Spark</ows:Abstract>
     <DataInputs>
       <Input minOccurs="1" maxOccurs="1">
         <ows:Identifier>source-data</ows:Identifier>
@@ -57,17 +57,18 @@
         </ComplexData>
       </Input>
       <Input minOccurs="0" maxOccurs="1">
-        <ows:Identifier>initial-model-parameters</ows:Identifier>
-        <ows:Title>Initial model parameters</ows:Title>
+        <ows:Identifier>input-model</ows:Identifier>
+        <ows:Title>Model</ows:Title>
+        <ows:Abstract>The model to re-train</ows:Abstract>
         <ComplexData>
           <Default>
             <Format>
-              <MimeType>application/json</MimeType>
+              <MimeType>application/zip</MimeType>
             </Format>
           </Default>
           <Supported>
             <Format>
-              <MimeType>application/json</MimeType>
+              <MimeType>application/zip</MimeType>
             </Format>
           </Supported>
         </ComplexData>
@@ -75,8 +76,9 @@
     </DataInputs>
     <ProcessOutputs>
       <Output>
-        <ows:Identifier>model</ows:Identifier>
-        <ows:Title>The model</ows:Title>
+        <ows:Identifier>re-trained-model</ows:Identifier>
+        <ows:Title>Model</ows:Title>
+        <ows:Abstract>The re-trained model</ows:Abstract>
         <ComplexOutput>
           <Default>
             <Format>
