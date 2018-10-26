@@ -1,5 +1,8 @@
 package org.n52.geoprocessing.project.testbed14.ml;
 
+import java.awt.image.DataBuffer;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.media.jai.JAI;
+import javax.media.jai.RasterFactory;
 import javax.xml.namespace.QName;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -26,7 +30,9 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.io.FileUtils;
+import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.data.DataStore;
@@ -89,6 +95,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeType;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
+import org.opengis.feature.type.Name;
 import org.opengis.filter.identity.Identifier;
 import org.opengis.geometry.Envelope;
 import org.opengis.parameter.GeneralParameterValue;
@@ -127,6 +134,8 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private String jarPath;
 
     private String modelPath;
+
+    private Map<Long, String> classificationMap = new HashMap<>();
 
     public Train_MLDecisionTreeClassificationAlgorithm(){
     }
@@ -531,7 +540,35 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         Envelope bounds;
         GridCoverage2D raster = new VectorToRasterProcess().execute((SimpleFeatureCollection) featureCollection, rasterWidth, rasterHeight, title, attribute, null, null);
 
-        return raster;
+        RenderedImage renderedImage = raster.getRenderedImage();
+
+        int height = renderedImage.getHeight();
+        int width = renderedImage.getWidth();
+
+        int[] samples = renderedImage.getData().getSamples(0, 0, width, height, 0, new int[width * height]);
+
+        int[] samples2 = new int[width * height];
+
+        WritableRaster raster2 = RasterFactory.createBandedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
+
+        for (int i = 0; i < samples.length; i++) {
+
+            int sample = samples[i];
+
+            if(sample == 0){
+                sample = Short.MIN_VALUE;
+            }
+            samples2[i] = sample;
+        }
+
+        raster2.setSamples(0, 0, width, height, 0, samples2);
+
+        Envelope envelope = raster.getEnvelope();
+
+        GridCoverageFactory factory = CoverageFactoryFinder.getGridCoverageFactory(null);
+        GridCoverage2D gc = factory.create("trainingdata", raster2, envelope);
+
+        return gc;
     }
 
     private void writeGeotiff(GeoTiffWriter geoTiffWriter, GridCoverage coverage){
@@ -603,7 +640,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         File prj = new File(baseName + ".prj");
         File zipped =org.n52.wps.io.IOUtils.zip(shp, shx, dbf, prj);
 
-        outputMap.put(outputIDClassifiedFeatures, new GTVectorDataBinding(vectorFeatures));
+        outputMap.put(outputIDClassifiedFeatures, new GTVectorDataBinding(addClassificationTerm(vectorFeatures)));
 
         try {
             new GeoServerUploader(geoserverWCSGeneratorCM.getGeoserverUsername(), geoserverWCSGeneratorCM.getGeoserverPassword(), host, port).uploadShp(zipped, storeName);
@@ -629,7 +666,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
     }
 
-    public static File getShpFile(FeatureCollection<?, ?> collection, String fileName)
+    public File getShpFile(FeatureCollection<?, ?> collection, String fileName)
             throws IOException, IllegalAttributeException {
         SimpleFeatureType type = null;
         SimpleFeatureBuilder build = null;
@@ -639,6 +676,13 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         FeatureStore<SimpleFeatureType, SimpleFeature> store = null;
         File shp = File.createTempFile(fileName, ".shp");
         shp.deleteOnExit();
+
+        if(classificationMap.isEmpty()){
+            classificationMap.put(1l, "water");
+            classificationMap.put(2l, "park");
+            classificationMap.put(3l, "way");
+        }
+
         while (iterator.hasNext()) {
             SimpleFeature sf = (SimpleFeature) iterator.next();
             // create SimpleFeatureType
@@ -705,6 +749,8 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
                     }
                 }
 
+                builder.add("term", String.class);
+
                 type = builder.buildFeatureType();
 
                 ShapefileDataStore dataStore = new ShapefileDataStore(shp
@@ -721,7 +767,25 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
                 build = new SimpleFeatureBuilder(type);
             }
             for (AttributeType attributeType : type.getTypes()) {
-                build.add(sf.getProperty(attributeType.getName()).getValue());
+
+                Name attributeName = attributeType.getName();
+                String attributeNameLocalpart = attributeName.getLocalPart();
+
+                if(attributeNameLocalpart.equals("term")){
+
+                    Object o = sf.getProperty("value").getValue();
+
+                    Long value = 0l;
+
+                    if(o instanceof Double){
+                        value = ((Double)o).longValue();
+                    }else if(o instanceof Long){
+                        value = (Long)o;
+                    }
+                    build.add(classificationMap.get(value));
+                }else{
+                    build.add(sf.getProperty(attributeName).getValue());
+                }
             }
 
             SimpleFeature newSf = build.buildFeature(sf.getIdentifier()
@@ -741,6 +805,122 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         } finally {
             transaction.close();
         }
+    }
+
+    public SimpleFeatureCollection addClassificationTerm(FeatureCollection<?, ?> collection)
+            throws IOException, IllegalAttributeException {
+        SimpleFeatureType type = null;
+        SimpleFeatureBuilder build = null;
+        FeatureIterator<?> iterator = collection.features();
+        List<SimpleFeature> featureList = new ArrayList<>();
+
+        if(classificationMap.isEmpty()){
+            classificationMap.put(1l, "water");
+            classificationMap.put(2l, "park");
+            classificationMap.put(3l, "way");
+        }
+
+        while (iterator.hasNext()) {
+            SimpleFeature sf = (SimpleFeature) iterator.next();
+            // create SimpleFeatureType
+            if (type == null) {
+                SimpleFeatureType inType = (SimpleFeatureType) collection
+                        .getSchema();
+                SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+                builder.setName(inType.getName());
+                builder.setNamespaceURI(inType.getName().getNamespaceURI());
+
+                if (collection.getSchema().getCoordinateReferenceSystem() == null) {
+                    builder.setCRS(DefaultGeographicCRS.WGS84);
+                } else {
+                    builder.setCRS(collection.getSchema()
+                            .getCoordinateReferenceSystem());
+                }
+
+                builder.setDefaultGeometry(sf.getDefaultGeometryProperty()
+                        .getName().getLocalPart());
+
+                /*
+                 * seems like the geometries must always be the first property..
+                 * @see also ShapeFileDataStore.java getSchema() method
+                 */
+                Property geomProperty = sf.getDefaultGeometryProperty();
+
+                //TODO: check if that makes any sense at all
+                if(geomProperty.getType().getBinding().getSimpleName().equals("Geometry")){
+                    Geometry g = (Geometry)geomProperty.getValue();
+                    if(g!=null){
+                        GeometryAttribute geo = null;
+                        if(g instanceof MultiPolygon){
+
+                            GeometryAttribute oldGeometryDescriptor = sf.getDefaultGeometryProperty();
+                            GeometryType type1 = new GeometryTypeImpl(geomProperty.getName(),MultiPolygon.class, oldGeometryDescriptor.getType().getCoordinateReferenceSystem(),oldGeometryDescriptor.getType().isIdentified(),oldGeometryDescriptor.getType().isAbstract(),oldGeometryDescriptor.getType().getRestrictions(),oldGeometryDescriptor.getType().getSuper(),oldGeometryDescriptor.getType().getDescription());
+
+                            GeometryDescriptor newGeometryDescriptor = new GeometryDescriptorImpl(type1,geomProperty.getName(),0,1,true,null);
+                            Identifier identifier = new GmlObjectIdImpl(sf.getID());
+                            geo = new GeometryAttributeImpl((Object)g,newGeometryDescriptor, identifier);
+                            sf.setDefaultGeometryProperty(geo);
+                            sf.setDefaultGeometry(g);
+                        }else{
+                            //TODO: implement other cases
+                        }
+                        if(geo != null){
+                            builder.add(geo.getName().getLocalPart(), geo
+                                    .getType().getBinding());
+                        }
+                    }
+                }else {
+                    builder.add(geomProperty.getName().getLocalPart(), geomProperty
+                            .getType().getBinding());
+                }
+
+                for (Property prop : sf.getProperties()) {
+
+                    if (prop.getType() instanceof GeometryType) {
+                        /*
+                         * skip, was handled before
+                         */
+                    }else {
+                        builder.add(prop.getName().getLocalPart(), prop
+                                .getType().getBinding());
+                    }
+                }
+
+                builder.add("term", String.class);
+
+                type = builder.buildFeatureType();
+
+                build = new SimpleFeatureBuilder(type);
+            }
+            for (AttributeType attributeType : type.getTypes()) {
+
+                Name attributeName = attributeType.getName();
+                String attributeNameLocalpart = attributeName.getLocalPart();
+
+                if(attributeNameLocalpart.equals("term")){
+
+                    Object o = sf.getProperty("value").getValue();
+
+                    Long value = 0l;
+
+                    if(o instanceof Double){
+                        value = ((Double)o).longValue();
+                    }else if(o instanceof Long){
+                        value = (Long)o;
+                    }
+                    build.add(classificationMap.get(value));
+                }else{
+                    build.add(sf.getProperty(attributeName).getValue());
+                }
+            }
+
+            SimpleFeature newSf = build.buildFeature(sf.getIdentifier()
+                    .getID());
+
+            featureList.add(newSf);
+        }
+
+        return GTHelper.createSimpleFeatureCollectionFromSimpleFeatureList(featureList);
     }
 
     private String extractID(String s, String id) {
@@ -842,7 +1022,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         //need mapping between textual categories and values
 
-        CoordinateReferenceSystem crs = CRS.decode("EPSG:4326");
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:32631");
 
         List<SimpleFeature> simpleFeatureList = new ArrayList<SimpleFeature>();
         SimpleFeatureType featureType = null;
@@ -851,6 +1031,13 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         int i = 0;
         while(iterator.hasNext()){
             SimpleFeature feature = (SimpleFeature) iterator.next();
+
+            String classificationType = (String)feature.getAttribute("term");
+            Long classificationValue = Long.valueOf(feature.getAttribute("value").toString());
+
+            if(!classificationMap.containsKey(classificationValue)){
+                classificationMap.put(classificationValue, classificationType);
+            }
 
             if(i==0){
                 featureType = GTHelper.createFeatureType(feature.getProperties(), (Geometry)feature.getDefaultGeometry(), uuid, crs);
