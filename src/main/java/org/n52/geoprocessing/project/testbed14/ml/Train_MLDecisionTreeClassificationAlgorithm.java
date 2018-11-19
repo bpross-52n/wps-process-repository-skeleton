@@ -53,6 +53,7 @@ import org.geotools.filter.identity.GmlObjectIdImpl;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.process.raster.PolygonExtractionProcess;
 import org.geotools.process.vector.VectorToRasterProcess;
 import org.geotools.referencing.CRS;
@@ -97,6 +98,7 @@ import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
 import org.opengis.feature.type.Name;
 import org.opengis.filter.identity.Identifier;
+import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
@@ -132,6 +134,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private String outputIDModelQuality = "model-quality";
     private String outputDir;
     private String jarPath;
+    private String tmpDir = "d:/tmp";
 
     private String modelPath;
 
@@ -254,7 +257,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
               GridCoverage2D raster = vectorToRaster(features);
 
               try {
-                  newTrainingDataFile = new File("/tmp/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+                  newTrainingDataFile = new File(tmpDir + "/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
 
                   GeoTiffWriter geoTiffWriter = new GeoTiffWriter(newTrainingDataFile);
                   writeGeotiff(geoTiffWriter, raster);
@@ -269,7 +272,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
                 trainingDataFile = ((GenericFileDataBinding)trainingDataData).getPayload().getBaseFile(true);
 
-                newTrainingDataFile = new File("/tmp/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+                newTrainingDataFile = new File(tmpDir + "/training" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
 
                 try {
                     FileUtils.copyFile(trainingDataFile, newTrainingDataFile);
@@ -298,7 +301,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
             sourceDataFile = ((GenericFileDataBinding) sourceDataData).getPayload().getBaseFile(false);
 
-            newSourceDataFile = new File("/tmp/source" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
+            newSourceDataFile = new File(tmpDir + "/source" + UUID.randomUUID().toString().substring(0, 5) + ".tif");
 
             try {
                 FileUtils.copyFile(sourceDataFile, newSourceDataFile);
@@ -628,6 +631,18 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
 
         SimpleFeatureCollection vectorFeatures = new PolygonExtractionProcess().execute(theBinding.getPayload(), new Integer(0), true, null, noDataValues, null, null);
 
+        ReferencedEnvelope bbox = vectorFeatures.getBounds();
+
+        DirectPosition lowerCorner = bbox.getLowerCorner();
+
+        DirectPosition upperCorner = bbox.getUpperCorner();
+
+        double[] lowerCornerCoordinate = lowerCorner.getCoordinate();
+
+        double[] upperCornerCoordinate = upperCorner.getCoordinate();
+
+        String bboxString = lowerCornerCoordinate[0] + "," + lowerCornerCoordinate[1] + "," + upperCornerCoordinate[0] + "," + upperCornerCoordinate[1];
+
         String storeName = "tb14-ml" + UUID.randomUUID().toString().substring(0, 5);
 
         File shp = getShpFile(vectorFeatures, storeName);
@@ -649,7 +664,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         }
         String getFeatureLink = "http://"+host+":"+port+"/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&typeName="+ storeName;
 
-        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getFeatureLink;
+        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getFeatureLink + "&typeNames=" + storeName + "&BBOX=" + bboxString;
 
         String featureID = "";
 
