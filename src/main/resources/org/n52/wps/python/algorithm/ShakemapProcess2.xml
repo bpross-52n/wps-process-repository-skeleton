@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wps:ProcessDescriptions xmlns:wps="http://www.opengis.net/wps/1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1"
+	xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsDescribeProcess_response.xsd"
+	xml:lang="en-US" service="WPS" version="1.0.0">
+	<ProcessDescription statusSupported="true"
+		storeSupported="true" wps:processVersion="1.0.0">
+		<ows:Identifier>org.n52.wps.python.algorithm.ShakemapProcess2</ows:Identifier>
+		<ows:Title>ShakemapProcess</ows:Title>
+		<DataInputs>
+			<Input minOccurs="1" maxOccurs="1">
+				<ows:Identifier>shakemap</ows:Identifier>
+				<ows:Title>shakemap-input</ows:Title>
+				<ComplexData>
+					<Default>
+						<Format>
+							<MimeType>text/xml</MimeType>
+							<Schema>http://earthquake.usgs.gov/eqcenter/shakemap/xml/schemas/shakemap.xsd</Schema>
+						</Format>
+					</Default>
+					<Supported>
+						<Format>
+							<MimeType>text/xml</MimeType>
+							<Schema>http://earthquake.usgs.gov/eqcenter/shakemap/xml/schemas/shakemap.xsd</Schema>
+						</Format>
+					</Supported>
+				</ComplexData>
+			</Input>
+			<Input minOccurs="1" maxOccurs="1">
+				<ows:Identifier>exposure</ows:Identifier>
+				<ows:Title>exposure-input</ows:Title>
+				<ows:Abstract>The exposure as XML</ows:Abstract>
+				<ows:Metadata></ows:Metadata>
+				<ComplexData>
+					<Default>
+						<Format>
+							<MimeType>text/xml</MimeType>
+						</Format>
+					</Default>
+					<Supported>
+						<Format>
+							<MimeType>text/xml</MimeType>
+						</Format>
+					</Supported>
+				</ComplexData>
+			</Input>
+			<Input minOccurs="1" maxOccurs="1">
+				<ows:Identifier>exposure</ows:Identifier>
+				<ows:Title>exposure-input</ows:Title>
+				<ows:Abstract>The exposure as XML</ows:Abstract>
+				<ows:Metadata></ows:Metadata>
+				<BoundingBoxData>
+					<Default>
+						<CRS>EPSG:4326</CRS>
+					</Default>
+					<Supported>
+						<CRS>EPSG:4326</CRS>
+					</Supported>
+				</BoundingBoxData>
+			</Input>
+		</DataInputs>
+		<ProcessOutputs>
+			<Output>
+				<ows:Identifier>shakemap-output</ows:Identifier>
+				<ows:Title>shakemap-output</ows:Title>
+				<ows:Abstract>shakemap-output</ows:Abstract>
+				<ComplexOutput>
+					<Default>
+						<Format>
+							<MimeType>text/xml</MimeType>
+							<Schema>http://earthquake.usgs.gov/eqcenter/shakemap/xml/schemas/shakemap.xsd</Schema>
+						</Format>
+					</Default>
+					<Supported>
+						<Format>
+							<MimeType>text/xml</MimeType>
+							<Schema>http://earthquake.usgs.gov/eqcenter/shakemap/xml/schemas/shakemap.xsd</Schema>
+						</Format>
+						<Format>
+							<MimeType>application/WMS</MimeType>
+						</Format>
+						<Format>
+							<MimeType>image/tiff</MimeType>
+						</Format>
+						<Format>
+							<MimeType>image/tiff</MimeType>
+							<Encoding>base64</Encoding>
+						</Format>
+					</Supported>
+				</ComplexOutput>
+			</Output>
+		</ProcessOutputs>
+	</ProcessDescription>
+</wps:ProcessDescriptions>
