@@ -119,7 +119,7 @@ public class ShakemapConverter {
 
                 if(i == latIndex-1){
                     lat = Double.parseDouble(part);
-                }else if(i == lonIndex-1){
+                } else if(i == lonIndex-1){
                     lon = Double.parseDouble(part);
                 } else if(i == pgaIndex-1){
                     pga = Double.parseDouble(part);
@@ -137,7 +137,7 @@ public class ShakemapConverter {
             double v = Math.ceil(c * lat + d);
 
             if(!((u > width) || (v > height))){
-                raster.setSample((int)u, (int)v, 0, getIntensity(pga));
+                raster.setSample((int)u, (int)v, 0, pga);
             }else{
                 LOGGER.warn("Image coordinates out of bounds: u: " + u + " v: " + v + " width: " + width + " height: " + height);
             }

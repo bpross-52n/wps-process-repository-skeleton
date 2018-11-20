@@ -34,43 +34,43 @@ public class ShakemapProcess2 extends AbstractAlgorithm {
     private final String lineSeparator = System.getProperty("line.separator");
 	private String outputFileName;
 	private GenericFileData selectedRows;
-	
+
 	private static Logger LOGGER = LoggerFactory.getLogger(ShakemapProcess2.class);
-	
-	
+
+
 	@Override
 	public Map<String, IData> run(Map<String, List<IData>> inputData) throws ExceptionReport {
-		
+
 		List<IData> shakemapInput = inputData.get(shakemapInputId);
-		
+
 		shakemapFile = ((GenericFileDataBinding) shakemapInput.get(0)).getPayload().getBaseFile(false);
-		
+
 		List<IData> bboxInput = inputData.get(boundingboxInputId);
-		
+
 		BoundingBoxData boundingBox = ((BoundingBoxData) bboxInput.get(0)).getPayload();
-		
+
 		lowerCorner = boundingBox.getLowerCorner();
-		
+
 		List<IData> exposureInput = inputData.get(exposureInputId);
-		
+
 		exposureFile = ((GenericFileDataBinding) exposureInput.get(0)).getPayload().getBaseFile(false);
-		
+
 		runScript();
-		
+
 		File exposureResultFile = new File("/tmp/exposure.xml");
-		
+
 		Map<String, IData> result = new HashMap<>();
-		
+
 		try {
 			result.put(exposureOutputId, new GenericFileDataBinding(new GenericFileData(exposureResultFile, "text/xml")));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return result;
 	}
-	
+
 	private String getCommand() {
 		// TODO Auto-generated method stub
 		return "python3 scrupt.py " + shakemapFile.getAbsolutePath() + " " + lowerCorner[0];
