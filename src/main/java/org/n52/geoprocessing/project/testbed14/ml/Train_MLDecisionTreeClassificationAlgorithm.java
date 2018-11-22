@@ -662,9 +662,12 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
         } catch (IOException e) {
             LOGGER.error(e.getMessage());
         }
-        String getFeatureLink = "http://"+host+":"+port+"/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&typeName="+ storeName;
 
-        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getFeatureLink + "&typeNames=" + storeName + "&BBOX=" + bboxString;
+        String typeName = shp.getName().replace(".shp", "");
+
+        String getFeatureLink = "http://"+host+":"+port+"/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&typeName="+ typeName;
+
+        String storeFeaturesURL = "http://140.134.48.19/ML/StoreFeatures.ashx" + "?WFS_URL=" + getFeatureLink + "&typeNames=" + typeName + "&BBOX=" + bboxString;
 
         String featureID = "";
 
