@@ -3,7 +3,6 @@ package org.n52.geoprocessing.project.testbed14.ml;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,13 +28,14 @@ import org.n52.geoprocessing.project.testbed14.ml.util.JavaProcessStreamReader;
 import org.n52.project.testbed14.ml.repository.MLAlgorithmRepository;
 import org.n52.project.testbed14.ml.repository.modules.MLAlgorithmRepositoryCM;
 import org.n52.wps.commons.WPSConfig;
+import org.n52.wps.commons.context.ExecutionContext;
+import org.n52.wps.commons.context.ExecutionContextFactory;
+import org.n52.wps.commons.context.OutputTypeWrapper;
 import org.n52.wps.io.IOUtils;
 import org.n52.wps.io.data.GenericFileData;
 import org.n52.wps.io.data.IData;
-import org.n52.wps.io.data.binding.complex.GTRasterDataBinding;
 import org.n52.wps.io.data.binding.complex.GenericFileDataBinding;
 import org.n52.wps.io.datahandler.generator.GeoserverWCSGenerator;
-import org.n52.wps.io.datahandler.parser.GeotiffParser;
 import org.n52.wps.io.modules.generator.GeoserverWCSGeneratorCM;
 import org.n52.wps.server.AbstractObservableAlgorithm;
 import org.n52.wps.server.ExceptionReport;
@@ -44,6 +44,7 @@ import org.n52.wps.webapp.api.ConfigurationCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.opengis.wps.x100.OutputDefinitionType;
 import net.opengis.wps.x100.ProcessDescriptionsDocument;
 
 public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObservableAlgorithm {
@@ -100,7 +101,7 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
             return GenericFileDataBinding.class;
         }
         if (id.equals(outputIDClassifiedImage)) {
-            return GTRasterDataBinding.class;
+            return GenericFileDataBinding.class;
         }
         return GenericFileDataBinding.class;
     }
@@ -224,12 +225,52 @@ public class Execute_MLDecisionTreeClassificationAlgorithm extends AbstractObser
             outputMap.put(outputIDModelQuality,
                     new GenericFileDataBinding(new GenericFileData(zippedMetricsOutputFolder, "application/zip")));
 
-            outputMap.put(outputIDClassifiedImage,
-                    new GeotiffParser().parse(new FileInputStream(classifiedImage), "application/x-geotiff", null));
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Could not create process outputs", e);
         }
+
+        try {
+
+            ExecutionContext executionContext = ExecutionContextFactory.getContext();
+
+            if(executionContext != null){
+
+            	String mimeType = "";
+
+            	OutputTypeWrapper outputs = executionContext.getOutputs();
+
+            	if(outputs.isWPS100Execution()){
+            		List<? extends OutputDefinitionType> outputDefinitionTypes = outputs.getWps100OutputDefinitionTypes();
+
+            		for (OutputDefinitionType outputDefinitionType : outputDefinitionTypes) {
+						if(outputDefinitionType.getIdentifier().getStringValue().equals(outputIDClassifiedImage)){
+							mimeType = outputDefinitionType.getMimeType();
+							break;
+						}
+					}
+            	} else if(outputs.isWPS200Execution()){
+            		List<? extends net.opengis.wps.x20.OutputDefinitionType> outputDefinitionTypes = outputs.getWps200OutputDefinitionTypes();
+
+            		for (net.opengis.wps.x20.OutputDefinitionType outputDefinitionType : outputDefinitionTypes) {
+						if(outputDefinitionType.getId().equals(outputIDClassifiedImage)){
+							mimeType = outputDefinitionType.getMimeType();
+							break;
+						}
+					}
+            	}
+
+            	if(mimeType.equals("image/png")){
+            		classifiedImage = new File(outputFolderPath + "classification.png");
+                    outputMap.put(outputIDClassifiedImage,
+                            new GenericFileDataBinding(new GenericFileData(classifiedImage, "image/png")));
+            	} else {
+                    outputMap.put(outputIDClassifiedImage,
+                            new GenericFileDataBinding(new GenericFileData(classifiedImage,  "application/x-geotiff")));
+            	}
+            }
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 
         this.update("Finished process with id: " + processID);
 

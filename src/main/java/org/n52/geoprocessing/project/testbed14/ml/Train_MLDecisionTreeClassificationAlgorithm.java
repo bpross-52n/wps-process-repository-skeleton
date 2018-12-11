@@ -134,7 +134,7 @@ public class Train_MLDecisionTreeClassificationAlgorithm extends AbstractObserva
     private String outputIDModelQuality = "model-quality";
     private String outputDir;
     private String jarPath;
-    private String tmpDir = "d:/tmp";
+    private String tmpDir = "/tmp";
 
     private String modelPath;
 

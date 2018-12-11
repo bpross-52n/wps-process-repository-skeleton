@@ -66,6 +66,13 @@
           </Default>
           <Supported>
             <Format>
+              <MimeType>image/png</MimeType>
+            </Format>
+            <Format>
+              <MimeType>image/png</MimeType>
+              <Encoding>base64</Encoding>
+            </Format>
+            <Format>
               <MimeType>application/x-geotiff</MimeType>
             </Format>
             <Format>
