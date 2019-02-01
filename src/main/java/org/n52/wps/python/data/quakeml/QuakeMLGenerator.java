@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -57,7 +58,9 @@ public class QuakeMLGenerator extends AbstractGenerator {
 
         if(mimeType.equals(QuakeMLGenerator.mimeTypeGeoJSON)){
 
-            SimpleFeatureCollection featureCollection = new QuakeMLParser().parseQuakeMLToFeatureCollection(((QuakeMLDataBinding)data).getPayload().getDataStream());
+        	InputStream inputStream = new FileInputStream(((QuakeMLDataBinding)data).getPayload().getBaseFile(false));
+
+            SimpleFeatureCollection featureCollection = new QuakeMLParser().parseQuakeMLToFeatureCollection(inputStream);
 
             return new GeoJSONGenerator().generateStream(new GTVectorDataBinding(featureCollection), mimeTypeGeoJSON, null);
 
@@ -82,7 +85,7 @@ public class QuakeMLGenerator extends AbstractGenerator {
             rootElement.setAttributeNode(namespace);
 
             // events
-            FeatureIterator features = featureCollection.features();
+            FeatureIterator<?> features = featureCollection.features();
             while (features.hasNext()) {
                 Feature feature = features.next();
                 Element event = doc.createElement("event");
